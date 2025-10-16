@@ -9,8 +9,8 @@ export const resources: Resource[] = [
 ];
 
 export const campuses: Campus[] = [
-  { id: 'campus-1', name: 'Sede Central' },
-  { id: 'campus-2', name: 'Campus Norte' },
+  { id: 'campus-1', name: 'Sede Centro' },
+  { id: 'campus-2', name: 'Campus Pilar' },
 ];
 
 export const buildings: Building[] = [
@@ -18,6 +18,8 @@ export const buildings: Building[] = [
   { id: 'building-2', name: 'Edificio de Humanidades', label: 'Edificio de Carrera', campusId: 'campus-1' },
   { id: 'building-3', name: 'Módulo A', label: 'Módulo', campusId: 'campus-2' },
   { id: 'building-4', name: 'Edificio Anexo', label: 'Genérico', campusId: 'campus-2' },
+  { id: 'building-5', name: 'Centro tecnologico A', label: 'Laboratorio', campusId: 'campus-2' },
+  { id: 'building-6', name: 'Edificio veterinaria', label: 'Edificio veterinario', campusId: 'campus-2' },
 ];
 
 export const classrooms: Classroom[] = [

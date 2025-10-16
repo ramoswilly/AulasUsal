@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Building, Factory, PlusCircle, School, ChevronsRight } from 'lucide-react'
+import { Building, Factory, PlusCircle, School, ChevronsRight, FlaskConical, Stethoscope } from 'lucide-react'
 import { buildings, campuses, classrooms } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ function getBuildingIcon(label: string) {
     switch (label) {
         case 'Centro Tecnológico': return <Factory className="size-5 text-muted-foreground" />;
         case 'Edificio de Carrera': return <School className="size-5 text-muted-foreground" />;
+        case 'Laboratorio': return <FlaskConical className="size-5 text-muted-foreground" />;
+        case 'Edificio veterinario': return <Stethoscope className="size-5 text-muted-foreground" />;
         default: return <Building className="size-5 text-muted-foreground" />;
     }
 }

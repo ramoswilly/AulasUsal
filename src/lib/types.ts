@@ -14,7 +14,7 @@ export type Classroom = {
 export type Building = {
   id: string;
   name: string;
-  label: 'Centro Tecnológico' | 'Edificio de Carrera' | 'Módulo' | 'Genérico';
+  label: 'Centro Tecnológico' | 'Edificio de Carrera' | 'Módulo' | 'Genérico' | 'Laboratorio' | 'Edificio veterinario';
   campusId: string;
 };
 
