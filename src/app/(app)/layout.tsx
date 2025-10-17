@@ -88,12 +88,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isSubmenu data-state={isAcademicsActive() ? 'open' : 'closed'} tooltip={{ children: 'Académico' }}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <BookMarked />
-                    <span>Académico</span>
-                  </div>
-                </div>
+                <>
+                  <BookMarked />
+                  <span>Académico</span>
+                </>
               </SidebarMenuButton>
               <SidebarMenuSub>
                 <SidebarMenuSubItem>
