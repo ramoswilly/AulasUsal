@@ -3,12 +3,15 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
+  BookCopy,
   BookMarked,
   Building2,
+  Home,
   LayoutDashboard,
   LogOut,
   PanelLeft,
   Settings,
+  Users,
 } from 'lucide-react'
 
 import {
@@ -22,9 +25,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Icons } from '@/components/icons'
@@ -46,10 +46,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isActive = (path: string) => {
     return pathname === path || pathname.startsWith(`${path}/`)
-  }
-  
-  const isAcademicsActive = () => {
-    return pathname.startsWith('/academics')
   }
 
   return (
@@ -87,29 +83,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isSubmenu data-state={isAcademicsActive() ? 'open' : 'closed'} tooltip={{ children: 'Académico' }}>
-                <>
-                  <BookMarked />
-                  <span>Académico</span>
-                </>
-              </SidebarMenuButton>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={isActive('/academics/programs')}>
-                    <Link href="/academics/programs">Carreras</Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={isActive('/academics/courses')}>
-                    <Link href="/academics/courses">Materias</Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={isActive('/academics/sections')}>
-                    <Link href="/academics/sections">Comisiones</Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
+                <SidebarMenuButton asChild isActive={isActive('/academics/programs')} tooltip={{ children: 'Carreras' }}>
+                    <Link href="/academics/programs">
+                        <BookMarked />
+                        <span>Carreras</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/academics/courses')} tooltip={{ children: 'Materias' }}>
+                    <Link href="/academics/courses">
+                        <BookCopy />
+                        <span>Materias</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/academics/sections')} tooltip={{ children: 'Comisiones' }}>
+                    <Link href="/academics/sections">
+                        <Users />
+                        <span>Comisiones</span>
+                    </Link>
+                </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
