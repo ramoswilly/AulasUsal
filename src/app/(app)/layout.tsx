@@ -83,18 +83,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/academics/programs')} tooltip={{ children: 'Carreras' }}>
-                    <Link href="/academics/programs">
-                        <BookMarked />
-                        <span>Carreras</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/academics/courses')} tooltip={{ children: 'Materias' }}>
+                <SidebarMenuButton asChild isActive={isActive('/academics/courses')} tooltip={{ children: 'Académico' }}>
                     <Link href="/academics/courses">
-                        <BookCopy />
-                        <span>Materias</span>
+                        <BookMarked />
+                        <span>Académico</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
