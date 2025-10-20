@@ -1,9 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { Bot, Loader2, Sparkles, Users } from 'lucide-react'
+import { Loader2, Users } from 'lucide-react'
 
-import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
 import type { Program, Classroom } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 
@@ -22,17 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 type EnrichedSection = {
@@ -59,8 +48,6 @@ type SectionsTableProps = {
 
 export function SectionsTable({ sections, programs, classrooms }: SectionsTableProps) {
   const [filter, setFilter] = React.useState('all')
-  const [isAssigning, setIsAssigning] = React.useState(false)
-  const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
   const [isClient, setIsClient] = React.useState(false)
 
   const { toast } = useToast()
@@ -68,19 +55,6 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
   React.useEffect(() => {
     setIsClient(true)
   }, [])
-
-  const handleAutoAssign = async () => {
-    setIsAssigning(true)
-    setAssignmentResult(null)
-    const result = await runAutoAssignment()
-    setAssignmentResult(result)
-    setIsAssigning(false)
-    toast({
-        title: result.success ? "Proceso Completado" : "Error",
-        description: result.message,
-        variant: result.success ? "default" : "destructive",
-    })
-  }
   
   const handleManualAssignment = (sectionId: string, classroomId: string) => {
     console.log(`Manually assigning section ${sectionId} to classroom ${classroomId}`);
@@ -125,14 +99,6 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleAutoAssign} disabled={isAssigning} className="w-full sm:w-auto">
-            {isAssigning ? (
-              <Loader2 className="mr-2 animate-spin" />
-            ) : (
-              <Bot className="mr-2" />
-            )}
-            Auto-Asignar
-          </Button>
         </div>
         <CardContent className="p-0">
           <Table>
@@ -190,29 +156,6 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
           </Table>
         </CardContent>
       </Card>
-      
-      <AlertDialog open={!!assignmentResult && !isAssigning} onOpenChange={() => setAssignmentResult(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 font-headline">
-              <Sparkles className="text-accent" />
-              Resultado de la Asignación
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {assignmentResult?.message}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {assignmentResult?.unassignedCount && assignmentResult.unassignedCount > 0 && (
-             <div className="text-sm bg-secondary p-3 rounded-md">
-                <h4 className="font-semibold mb-2">Resumen de fallos:</h4>
-                <p className="text-secondary-foreground">{assignmentResult.failureSummary || 'No se pudo generar un resumen.'}</p>
-             </div>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogAction>Entendido</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }

@@ -1,4 +1,3 @@
-
 'use client'
 
 import * as React from 'react'
@@ -25,9 +24,19 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast'
-import { Users, Projector } from 'lucide-react'
+import { Users, Projector, Bot, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
@@ -42,6 +51,8 @@ export default function SchedulePage() {
     const [selectedTurn, setSelectedTurn] = React.useState('NOCHE'); 
     const [sections, setSections] = React.useState(allSections);
     const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
+    const [isAssigning, setIsAssigning] = React.useState(false)
+    const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
 
     const { toast } = useToast();
 
@@ -101,7 +112,12 @@ export default function SchedulePage() {
             if (a.hasCapacity !== b.hasCapacity) {
                 return a.hasCapacity ? -1 : 1;
             }
-            return (b.capacity - b.futureOccupancy) - (a.capacity - a.futureOccupancy);
+            if (a.hasCapacity) { // Only sort by proximity if they both have capacity
+              const aProximity = a.capacity - a.futureOccupancy;
+              const bProximity = b.capacity - b.futureOccupancy;
+              return aProximity - bProximity; // Ascending order of remaining space
+            }
+            return 0;
           })
       }
 
@@ -121,6 +137,37 @@ export default function SchedulePage() {
             title: "Aula Asignada",
             description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
         })
+    }
+
+    const handleAutoAssign = async () => {
+        setIsAssigning(true)
+        setAssignmentResult(null)
+        const result = await runAutoAssignment()
+        setAssignmentResult(result)
+        setIsAssigning(false)
+        toast({
+            title: result.success ? "Proceso Completado" : "Error",
+            description: result.message,
+            variant: result.success ? "default" : "destructive",
+        })
+        if (result.success) {
+            // NOTE: In a real app you'd refetch data here.
+            // For now, we'll just show the result.
+            // Or, we could optimistically update the state. Let's do that for the demo.
+            setSections(prevSections => {
+                const newSections = [...prevSections];
+                result.assignedSections?.forEach(assignment => {
+                    const sectionIndex = newSections.findIndex(s => s.id === assignment.sectionId);
+                    if (sectionIndex > -1) {
+                        newSections[sectionIndex] = {
+                            ...newSections[sectionIndex],
+                            assignedClassroomId: assignment.classroomId
+                        };
+                    }
+                });
+                return newSections;
+            });
+        }
     }
 
     const courseForModal = assigningSection ? getCourseForSection(assigningSection) : null;
@@ -188,6 +235,14 @@ export default function SchedulePage() {
                 <SelectItem value="NOCHE">Noche</SelectItem>
             </SelectContent>
         </Select>
+        <Button onClick={handleAutoAssign} disabled={isAssigning} className="w-auto ml-auto">
+            {isAssigning ? (
+              <Loader2 className="mr-2 animate-spin" />
+            ) : (
+              <Bot className="mr-2" />
+            )}
+            Auto-Asignar
+          </Button>
       </div>
       
       <Card>
@@ -263,7 +318,7 @@ export default function SchedulePage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Aula</TableHead>
-                                <TableHead>Ocupación</TableHead>
+                                <TableHead>Ocupación Futura</TableHead>
                                 <TableHead>Recursos</TableHead>
                                 <TableHead className="w-[100px]"></TableHead>
                             </TableRow>
@@ -313,6 +368,29 @@ export default function SchedulePage() {
             </DialogFooter>
         </DialogContent>
     </Dialog>
+
+    <AlertDialog open={!!assignmentResult && !isAssigning} onOpenChange={() => setAssignmentResult(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 font-headline">
+              <Sparkles className="text-accent" />
+              Resultado de la Asignación
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {assignmentResult?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {assignmentResult?.unassignedCount && assignmentResult.unassignedCount > 0 && (
+             <div className="text-sm bg-secondary p-3 rounded-md">
+                <h4 className="font-semibold mb-2">Resumen de fallos:</h4>
+                <p className="text-secondary-foreground">{assignmentResult.failureSummary || 'No se pudo generar un resumen.'}</p>
+             </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogAction>Entendido</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

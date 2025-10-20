@@ -11,6 +11,7 @@ export type AssignmentResult = {
   assignedCount: number
   unassignedCount: number
   failureSummary?: string
+  assignedSections?: { sectionId: string; classroomId: string }[]
 }
 
 function getProgramIdForSection(section: Section): string {
@@ -58,6 +59,7 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
       assignedCount,
       unassignedCount,
       failureSummary,
+      assignedSections: result.assignedSections,
     }
   } catch (error) {
     console.error('Error during auto-assignment:', error)
