@@ -93,7 +93,22 @@ const autoAssignClassroomsFlow = ai.defineFlow(
     outputSchema: AutoAssignClassroomsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    // This is a temporary workaround to ensure programId is present.
+    // In a real app, this would be handled by data validation or a more robust data model.
+    const sectionsWithProgramId = input.sections.map(section => {
+        if (!section.programId) {
+            // A simple heuristic to derive programId from courseId if it's missing.
+            const courseIdParts = section.courseId.split('-');
+            if (courseIdParts.length > 2 && courseIdParts[0] === 'prog') {
+                return { ...section, programId: `prog-${courseIdParts[1]}`};
+            }
+            // Fallback for unknown cases
+            return { ...section, programId: 'unknown' };
+        }
+        return section;
+    });
+
+    const {output} = await prompt({ ...input, sections: sectionsWithProgramId });
     return output!;
   }
 );
