@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import * as React from 'react'
@@ -197,7 +198,13 @@ export default function SchedulePage() {
                         <div key={section.id} className="bg-muted p-1 rounded-sm h-full flex flex-col justify-center text-center">
                            <p className="font-bold text-[10px] leading-tight">{course?.name}</p>
                            {assignedClassroomName ? (
-                             <p className="text-muted-foreground text-[9px]">{assignedClassroomName}</p>
+                             <Button 
+                                variant="link" 
+                                className="text-muted-foreground underline-offset-2 hover:no-underline h-auto p-0 text-[9px]"
+                                onClick={() => handleOpenAssignModal(section)}
+                            >
+                                {assignedClassroomName}
+                            </Button>
                            ) : (
                             <Button 
                                 variant="link" 
