@@ -250,7 +250,7 @@ export default function SchedulePage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Aula</TableHead>
-                                <TableHead>Capacidad</TableHead>
+                                <TableHead>Ocupación</TableHead>
                                 <TableHead>Recursos</TableHead>
                                 <TableHead className="w-[100px]"></TableHead>
                             </TableRow>
@@ -259,7 +259,7 @@ export default function SchedulePage() {
                             {availableClassroomsForModal.map(classroom => (
                                 <TableRow key={classroom.id}>
                                     <TableCell className="font-medium">{classroom.name}</TableCell>
-                                    <TableCell>{classroom.capacity}</TableCell>
+                                    <TableCell>{assigningSection?.enrolledStudents}/{classroom.capacity}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
                                             {classroom.resources.map(id => (
