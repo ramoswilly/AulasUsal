@@ -56,6 +56,36 @@ export async function autoAssignClassrooms(input: AutoAssignClassroomsInput): Pr
   return autoAssignClassroomsFlow(input);
 }
 
+const prompt = ai.definePrompt({
+  name: 'autoAssignClassroomsPrompt',
+  input: {schema: AutoAssignClassroomsInputSchema},
+  output: {schema: AutoAssignClassroomsOutputSchema},
+  prompt: `You are an expert university scheduler. Your task is to assign sections to classrooms based on a set of rules.
+
+  Assignment Rules:
+  1.  **Schedule & Availability**: A section can only be assigned to a classroom if the classroom is free during the section's scheduled time (days and time slot). A classroom can host multiple sections at the same time if their combined student count does not exceed the classroom's capacity.
+  2.  **Resources**: The assigned classroom must have all the "desiredResources" specified for the section.
+  3.  **Capacity (Shared Classrooms)**: The total number of enrolled students from all sections assigned to the same classroom at the same time slot cannot exceed the classroom's capacity.
+  4.  **Optimal Fit**: Prioritize assigning sections to classrooms where the capacity is closest to (but not less than) the number of enrolled students to make efficient use of space. Avoid using a large classroom for a small section if a smaller, suitable classroom is available.
+
+  Process:
+  -   Iterate through each section that does not yet have an assigned classroom.
+  -   Find the best available classroom based on the rules above.
+  -   If a suitable classroom is found, assign the section to it.
+  -   If no suitable classroom can be found, add the section to the unassigned list with a clear reason for the failure (e.g., "No available classroom with sufficient capacity and required resources," "Time conflict in all suitable classrooms.").
+  
+  Provided Data:
+  Classrooms:
+  {{{json classrooms}}}
+  
+  Sections to assign:
+  {{{json sections}}}
+  
+  Your goal is to maximize the number of assigned sections while adhering strictly to all the rules, especially the optimal fit.
+  `,
+});
+
+
 const autoAssignClassroomsFlow = ai.defineFlow(
   {
     name: 'autoAssignClassroomsFlow',
@@ -63,56 +93,7 @@ const autoAssignClassroomsFlow = ai.defineFlow(
     outputSchema: AutoAssignClassroomsOutputSchema,
   },
   async input => {
-    const {sections, classrooms} = input;
-    const assignedSections: { sectionId: string; classroomId: string }[] = [];
-    const unassignedSections: { sectionId: string; reason: string }[] = [];
-
-    for (const section of sections) {
-      // Skip already assigned sections
-      if (section.assignedClassroomId) {
-        continue;
-      }
-
-      for (const classroom of classrooms) {
-        // Rule 2: Resources. The aula asignada debe tener todos los "recursos deseados" que se especificaron para la comisión.
-        const hasAllResources = section.desiredResources.every(resource => classroom.resources.includes(resource));
-        if (!hasAllResources) {
-          continue;
-        }
-
-        // Rule 3: Capacidad (Manejo de Aulas Compartidas).
-        // Check if the classroom has enough capacity for the section.
-        let totalEnrolled = section.enrolledStudents;
-
-        // Check for conflicts with existing assignments in the classroom
-        for (const assignedSection of assignedSections) {
-          const assignedSectionDetails = sections.find(s => s.id === assignedSection.sectionId);
-          if (assignedSection.classroomId === classroom.id && assignedSectionDetails) {
-            // Simulate time conflict (Need to implement actual time conflict checking)
-            totalEnrolled += assignedSectionDetails.enrolledStudents;
-          }
-        }
-
-        if (totalEnrolled > classroom.capacity) {
-          continue; // Skip to the next classroom if capacity is exceeded
-        }
-
-
-        //Implement rules 1 here
-        // Rule 1: Horario y Disponibilidad. Solo puede asignar una comisión a un aula si esta no tiene conflictos de horario irresolubles.
-
-        // Simulate assignment success for now.
-        assignedSections.push({ sectionId: section.id, classroomId: classroom.id });
-        section.assignedClassroomId = classroom.id; // Update assignedClassroomId to prevent re-assignment
-        break; // Exit the inner loop once a classroom is assigned
-      }
-
-      if (!section.assignedClassroomId) {
-        unassignedSections.push({ sectionId: section.id, reason: 'No suitable classroom found.' });
-      }
-    }
-
-    return { assignedSections, unassignedSections };
+    const {output} = await prompt(input);
+    return output!;
   }
 );
-

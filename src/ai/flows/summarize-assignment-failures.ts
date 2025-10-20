@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeAssignmentFailuresOutputSchema},
   prompt: `You are an administrator in charge of summarizing the reasons why sections could not be assigned to classrooms.
 
-  Here are the reasons why sections could not be assigned:\n{{#each this}}\n- {{this}}{{#unless @last}}\n{{/unless}}{{\each}}\n\n  Provide a concise summary of these reasons.
+  Here are the reasons why sections could not be assigned:\n{{#each this}}\n- {{this}}{{#unless @last}}\n{{/unless}}{{/each}}\n\n  Provide a concise summary of these reasons.
   `,
 });
 
