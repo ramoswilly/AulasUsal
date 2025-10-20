@@ -1,12 +1,10 @@
 
-
 'use client'
 
 import * as React from 'react'
-import Link from 'next/link'
-import { courses, programs, sections, classrooms } from '@/lib/data'
+import { courses, programs, sections as allSections, classrooms, resources } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
-import type { Section, Course } from '@/lib/types'
+import type { Section, Course, Classroom } from '@/lib/types'
 import {
     Table,
     TableBody,
@@ -18,19 +16,33 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
+import { Users, Monitor, Projector } from 'lucide-react'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
 
 export default function SchedulePage() {
     const [selectedProgram, setSelectedProgram] = React.useState(programs[0].id);
-    // For now, hardcoding turn because the data is only for night turn
     const [selectedTurn, setSelectedTurn] = React.useState('NOCHE'); 
+    const [sections, setSections] = React.useState(allSections);
+    const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
+
+    const { toast } = useToast();
 
     const programCourses = courses.filter(c => c.programId === selectedProgram);
     const years = [...new Set(programCourses.map(c => c.year))].sort((a,b) => a - b);
     const classroomMap = new Map(classrooms.map(c => [c.id, c.name]));
+    const resourceMap = new Map(resources.map(r => [r.id, r.name]));
     
     const getCourseForSection = (section: Section): Course | undefined => {
         return courses.find(c => c.id === section.courseId);
@@ -50,7 +62,57 @@ export default function SchedulePage() {
             s.startTime.startsWith(startTime)
         );
     }
+
+    const getAvailableClassrooms = (section: Section | null): Classroom[] => {
+        if (!section) return [];
+        
+        return classrooms.filter(classroom => {
+            // Check capacity
+            if (classroom.capacity < section.enrolledStudents) {
+                return false;
+            }
+
+            // Check resources
+            const hasAllResources = section.desiredResources.every(resourceId =>
+                classroom.resources.includes(resourceId)
+            );
+            if (!hasAllResources) {
+                return false;
+            }
+
+            // Check for time conflicts (basic implementation)
+            const conflictingSection = sections.find(s => 
+                s.assignedClassroomId === classroom.id &&
+                s.id !== section.id &&
+                s.days.some(day => section.days.includes(day)) &&
+                s.startTime === section.startTime
+            );
+
+            return !conflictingSection;
+        });
+    }
+
+    const handleOpenAssignModal = (section: Section) => {
+        setAssigningSection(section);
+    }
     
+    const handleAssignClassroom = (sectionId: string, classroomId: string) => {
+        // This is a mock update. In a real app, you'd call a server action.
+        setSections(prevSections => 
+            prevSections.map(s => 
+                s.id === sectionId ? { ...s, assignedClassroomId: classroomId } : s
+            )
+        );
+        setAssigningSection(null);
+        toast({
+            title: "Aula Asignada",
+            description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
+        })
+    }
+
+    const courseForModal = assigningSection ? getCourseForSection(assigningSection) : null;
+    const availableClassroomsForModal = getAvailableClassrooms(assigningSection);
+
     const renderCell = (sections: Section[]) => {
         if (sections.length === 0) return <TableCell className="h-20 border-r"></TableCell>;
         
@@ -66,8 +128,12 @@ export default function SchedulePage() {
                            {assignedClassroomName ? (
                              <p className="text-muted-foreground text-[9px]">{assignedClassroomName}</p>
                            ) : (
-                            <Button asChild variant="link" className="text-destructive h-auto p-0 text-[9px] font-bold">
-                               <Link href="/academics/sections">Asignar Aula</Link>
+                            <Button 
+                                variant="link" 
+                                className="text-destructive h-auto p-0 text-[9px] font-bold"
+                                onClick={() => handleOpenAssignModal(section)}
+                            >
+                               Asignar Aula
                             </Button>
                            )}
                            <p className="text-muted-foreground text-[9px] mt-1">{section.professor}</p>
@@ -79,6 +145,7 @@ export default function SchedulePage() {
     }
 
   return (
+    <>
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
         title="Horarios y Comisiones"
@@ -158,5 +225,72 @@ export default function SchedulePage() {
           </CardContent>
       </Card>
     </div>
+
+    <Dialog open={!!assigningSection} onOpenChange={() => setAssigningSection(null)}>
+        <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+                <DialogTitle>Asignar Aula</DialogTitle>
+                <DialogDescription>
+                    Seleccione un aula disponible para la comisión de <span className="font-semibold text-foreground">{courseForModal?.name}</span>.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-sm">
+                        <Users className="size-4 text-muted-foreground" />
+                        <span>{assigningSection?.enrolledStudents} alumnos</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Projector className="size-4 text-muted-foreground" />
+                        <span>Recursos: {assigningSection?.desiredResources.map(id => resourceMap.get(id)).join(', ') || 'Ninguno'}</span>
+                    </div>
+                </div>
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Aula</TableHead>
+                                <TableHead>Capacidad</TableHead>
+                                <TableHead>Recursos</TableHead>
+                                <TableHead className="w-[100px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {availableClassroomsForModal.map(classroom => (
+                                <TableRow key={classroom.id}>
+                                    <TableCell className="font-medium">{classroom.name}</TableCell>
+                                    <TableCell>{classroom.capacity}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">
+                                            {classroom.resources.map(id => (
+                                                <Badge key={id} variant="secondary">{resourceMap.get(id)}</Badge>
+                                            ))}
+                                            {classroom.resources.length === 0 && <span className="text-xs text-muted-foreground">Ninguno</span>}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="sm" onClick={() => handleAssignClassroom(assigningSection!.id, classroom.id)}>
+                                            Asignar
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {availableClassroomsForModal.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                        No hay aulas disponibles que cumplan los requisitos.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setAssigningSection(null)}>Cancelar</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   )
 }
