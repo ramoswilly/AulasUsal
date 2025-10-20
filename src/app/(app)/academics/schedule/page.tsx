@@ -28,11 +28,14 @@ const semesters = [
     { id: 2, name: '2do Cuatrimestre' },
 ]
 
+const years = [1, 2, 3, 4, 5];
+
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 type EnrichedSection = Section & {
     courseName: string;
     programId: string;
+    courseYear: number;
     classroomName?: string;
     startHour: number;
     endHour: number;
@@ -119,11 +122,12 @@ function ScheduleGrid({ sections, timeSlots }: { sections: EnrichedSection[], ti
 
 export default function SchedulePage() {
     const [selectedProgram, setSelectedProgram] = React.useState(programs[0].id)
+    const [selectedYear, setSelectedYear] = React.useState('1');
     const [selectedShift, setSelectedShift] = React.useState(shifts[0].id)
     const [selectedSemester, setSelectedSemester] = React.useState(String(semesters[0].id))
 
 
-    const courseMap = new Map(courses.map(c => [c.id, { name: c.name, programId: c.programId }]));
+    const courseMap = new Map(courses.map(c => [c.id, { name: c.name, programId: c.programId, year: c.year }]));
     const classroomMap = new Map(classrooms.map(c => [c.id, c.name]));
 
     const enrichedSections: EnrichedSection[] = sections.map(section => {
@@ -134,6 +138,7 @@ export default function SchedulePage() {
             ...section,
             courseName: course?.name || 'N/A',
             programId: course?.programId || 'N/A',
+            courseYear: course?.year || 0,
             classroomName: classroomMap.get(section.assignedClassroomId || ''),
             startHour,
             endHour
@@ -142,6 +147,7 @@ export default function SchedulePage() {
 
     const activeShift = shifts.find(s => s.id === selectedShift) || shifts[0];
     const activeSemester = parseInt(selectedSemester);
+    const activeYear = parseInt(selectedYear);
 
     const timeSlots = Array.from(
         { length: activeShift.end - activeShift.start },
@@ -150,6 +156,7 @@ export default function SchedulePage() {
 
     const filteredSections = enrichedSections.filter(s => 
         s.programId === selectedProgram &&
+        s.courseYear === activeYear &&
         s.semester === activeSemester &&
         s.startHour >= activeShift.start && 
         s.endHour <= activeShift.end
@@ -173,6 +180,18 @@ export default function SchedulePage() {
             {programs.map((program) => (
               <SelectItem key={program.id} value={program.id}>
                 {program.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+         <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-full sm:w-[120px]">
+            <SelectValue placeholder="Año" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((year) => (
+              <SelectItem key={year} value={String(year)}>
+                {year}º Año
               </SelectItem>
             ))}
           </SelectContent>

@@ -32,6 +32,7 @@ export type Course = {
   id: string;
   name: string;
   programId: string;
+  year: number;
 };
 
 export type Section = {
@@ -45,4 +46,5 @@ export type Section = {
   assignedClassroomId?: string;
   professor?: string;
   semester: number;
+  commission: string;
 };
