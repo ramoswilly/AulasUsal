@@ -1,8 +1,9 @@
+
 'use server'
 
 import { autoAssignClassrooms } from '@/ai/flows/auto-assign-classrooms'
 import { summarizeAssignmentFailures } from '@/ai/flows/summarize-assignment-failures'
-import { classrooms, sections as allSections, programs, courses } from '@/lib/data'
+import { classrooms, sections as allSections, courses } from '@/lib/data'
 import { Section } from './types'
 
 export type AssignmentResult = {
@@ -16,9 +17,7 @@ export type AssignmentResult = {
 
 function getProgramIdForSection(section: Section): string {
     const course = courses.find(c => c.id === section.courseId);
-    if (!course) return 'unknown';
-    // The course itself has programId, no need to look up in programs table
-    return course.programId || 'unknown';
+    return course?.programId || 'unknown';
 }
 
 export async function runAutoAssignment(): Promise<AssignmentResult> {
@@ -68,6 +67,7 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
       message: 'Ocurrió un error durante la asignación automática.',
       assignedCount: 0,
       unassignedCount: allSections.filter(s => !s.assignedClassroomId).length,
+      failureSummary: 'No se pudo generar un resumen debido a un error inesperado en el servidor.'
     }
   }
 }
