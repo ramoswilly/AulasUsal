@@ -43,4 +43,6 @@ export type Section = {
   endTime: string;
   desiredResources: string[]; // Array of resource IDs
   assignedClassroomId?: string;
+  professor?: string;
+  semester: number;
 };

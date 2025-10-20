@@ -52,10 +52,10 @@ export const courses: Course[] = [
 ];
 
 export const sections: Section[] = [
-  { id: 'sec-1', courseId: 'course-1', enrolledStudents: 45, days: ['Lunes', 'Miércoles'], startTime: '09:00', endTime: '11:00', desiredResources: ['res-1', 'res-2'], assignedClassroomId: 'room-101' },
-  { id: 'sec-2', courseId: 'course-2', enrolledStudents: 28, days: ['Martes', 'Jueves'], startTime: '18:00', endTime: '20:00', desiredResources: ['res-1'], assignedClassroomId: undefined },
-  { id: 'sec-3', courseId: 'course-3', enrolledStudents: 55, days: ['Viernes'], startTime: '14:00', endTime: '17:00', desiredResources: [], assignedClassroomId: 'room-201' },
-  { id: 'sec-4', courseId: 'course-4', enrolledStudents: 35, days: ['Lunes'], startTime: '11:00', endTime: '13:00', desiredResources: [], assignedClassroomId: undefined },
-  { id: 'sec-5', courseId: 'course-5', enrolledStudents: 20, days: ['Martes', 'Jueves'], startTime: '18:00', endTime: '20:00', desiredResources: ['res-1', 'res-2'], assignedClassroomId: undefined },
-  { id: 'sec-6', courseId: 'course-1', enrolledStudents: 30, days: ['Sábados'], startTime: '09:00', endTime: '13:00', desiredResources: ['res-1'], assignedClassroomId: undefined },
+  { id: 'sec-1', courseId: 'course-1', enrolledStudents: 45, days: ['Lunes', 'Miércoles'], startTime: '09:00', endTime: '11:00', desiredResources: ['res-1', 'res-2'], assignedClassroomId: 'room-101', professor: 'Dr. Alan Turing', semester: 1 },
+  { id: 'sec-2', courseId: 'course-2', enrolledStudents: 28, days: ['Martes', 'Jueves'], startTime: '18:00', endTime: '20:00', desiredResources: ['res-1'], assignedClassroomId: undefined, professor: 'Dr. Edgar Codd', semester: 1 },
+  { id: 'sec-3', courseId: 'course-3', enrolledStudents: 55, days: ['Viernes'], startTime: '14:00', endTime: '17:00', desiredResources: [], assignedClassroomId: 'room-201', professor: 'Dra. Inés Freud', semester: 1 },
+  { id: 'sec-4', courseId: 'course-4', enrolledStudents: 35, days: ['Lunes'], startTime: '11:00', endTime: '13:00', desiredResources: [], assignedClassroomId: undefined, professor: 'Arq. Zaha Hadid', semester: 2 },
+  { id: 'sec-5', courseId: 'course-5', enrolledStudents: 20, days: ['Martes', 'Jueves'], startTime: '19:00', endTime: '21:00', desiredResources: ['res-1', 'res-2'], assignedClassroomId: undefined, professor: 'Dr. Donald Knuth', semester: 2 },
+  { id: 'sec-6', courseId: 'course-1', enrolledStudents: 30, days: ['Sábados'], startTime: '09:00', endTime: '13:00', desiredResources: ['res-1'], assignedClassroomId: undefined, professor: 'Dra. Ada Lovelace', semester: 2 },
 ];
