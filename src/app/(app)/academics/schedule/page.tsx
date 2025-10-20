@@ -3,7 +3,8 @@
 'use client'
 
 import * as React from 'react'
-import { courses, programs, sections } from '@/lib/data'
+import Link from 'next/link'
+import { courses, programs, sections, classrooms } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import type { Section, Course } from '@/lib/types'
 import {
@@ -16,6 +17,8 @@ import {
   } from '@/components/ui/table'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
@@ -27,6 +30,7 @@ export default function SchedulePage() {
 
     const programCourses = courses.filter(c => c.programId === selectedProgram);
     const years = [...new Set(programCourses.map(c => c.year))].sort((a,b) => a - b);
+    const classroomMap = new Map(classrooms.map(c => [c.id, c.name]));
     
     const getCourseForSection = (section: Section): Course | undefined => {
         return courses.find(c => c.id === section.courseId);
@@ -54,10 +58,18 @@ export default function SchedulePage() {
             <TableCell className="p-1 align-top h-20 border-r text-xs">
                 {sections.map(section => {
                     const course = getCourseForSection(section);
+                    const assignedClassroomName = section.assignedClassroomId ? classroomMap.get(section.assignedClassroomId) : null;
+
                     return (
                         <div key={section.id} className="bg-muted p-1 rounded-sm h-full flex flex-col justify-center text-center">
                            <p className="font-bold text-[10px] leading-tight">{course?.name}</p>
-                           <p className="text-muted-foreground text-[9px]">{course?.id}</p>
+                           {assignedClassroomName ? (
+                             <p className="text-muted-foreground text-[9px]">{assignedClassroomName}</p>
+                           ) : (
+                            <Button asChild variant="link" className="text-destructive h-auto p-0 text-[9px] font-bold">
+                               <Link href="/academics/sections">Asignar Aula</Link>
+                            </Button>
+                           )}
                            <p className="text-muted-foreground text-[9px] mt-1">{section.professor}</p>
                         </div>
                     )
@@ -148,5 +160,3 @@ export default function SchedulePage() {
     </div>
   )
 }
-
-    
