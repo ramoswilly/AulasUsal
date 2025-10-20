@@ -81,10 +81,10 @@ export default function SchedulePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
-        title={`Horarios de ${programs.find(p => p.id === selectedProgram)?.name}`}
+        title="Horarios y Comisiones"
         breadcrumbs={[
             { href: '/dashboard', label: 'Home' },
-            { href: '/academics/schedule', label: 'Horarios' }
+            { href: '/academics/schedule', label: 'Horarios y Comisiones' }
         ]}
       />
       <div className="flex gap-4 mb-4">
