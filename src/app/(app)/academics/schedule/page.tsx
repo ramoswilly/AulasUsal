@@ -13,22 +13,15 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import type { Section, Program } from '@/lib/types'
+import type { Section } from '@/lib/types'
 
 const shifts = [
-    { id: 'morning', name: 'Mañana (8:00 - 13:00)' },
-    { id: 'afternoon', name: 'Tarde (13:00 - 18:00)' },
-    { id: 'evening', name: 'Noche (18:00 - 23:00)' },
+    { id: 'morning', name: 'Mañana (8:00 - 13:00)', start: 8, end: 13 },
+    { id: 'afternoon', name: 'Tarde (13:00 - 18:00)', start: 13, end: 18 },
+    { id: 'evening', name: 'Noche (18:00 - 23:00)', start: 18, end: 23 },
 ]
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-
-const timeSlots = [
-  '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00',
-  '18:00', '19:00', '20:00', '21:00', '22:00'
-];
-
 
 type EnrichedSection = Section & {
     courseName: string;
@@ -38,7 +31,7 @@ type EnrichedSection = Section & {
     endHour: number;
 }
 
-function ScheduleGrid({ sections }: { sections: EnrichedSection[] }) {
+function ScheduleGrid({ sections, timeSlots }: { sections: EnrichedSection[], timeSlots: string[] }) {
     
     const getSectionsForSlot = (day: string, time: string) => {
         const hour = parseInt(time.split(':')[0]);
@@ -132,18 +125,17 @@ export default function SchedulePage() {
         }
     });
 
-    const getSectionsByShift = (shiftId: string) => {
-        const shiftHours = {
-            morning: { start: 8, end: 13 },
-            afternoon: { start: 13, end: 18 },
-            evening: { start: 18, end: 23 },
-        };
-        const { start, end } = shiftHours[shiftId as keyof typeof shiftHours];
-        return enrichedSections.filter(s => s.startHour >= start && s.endHour <= end);
-    }
-    
-    const filteredSections = getSectionsByShift(selectedShift).filter(
-        (s) => s.programId === selectedProgram
+    const activeShift = shifts.find(s => s.id === selectedShift) || shifts[0];
+
+    const timeSlots = Array.from(
+        { length: activeShift.end - activeShift.start },
+        (_, i) => `${(activeShift.start + i).toString().padStart(2, '0')}:00`
+    );
+
+    const filteredSections = enrichedSections.filter(s => 
+        s.programId === selectedProgram &&
+        s.startHour >= activeShift.start && 
+        s.endHour <= activeShift.end
     );
 
   return (
@@ -182,7 +174,7 @@ export default function SchedulePage() {
         </Select>
       </div>
 
-      <ScheduleGrid sections={filteredSections} />
+      <ScheduleGrid sections={filteredSections} timeSlots={timeSlots} />
     </div>
   )
 }
