@@ -1,12 +1,12 @@
+
 'use client'
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
-  BookCopy,
   BookMarked,
   Building2,
-  Home,
+  Calendar,
   LayoutDashboard,
   LogOut,
   PanelLeft,
@@ -95,6 +95,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Link href="/academics/sections">
                         <Users />
                         <span>Comisiones</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/academics/schedule')} tooltip={{ children: 'Horarios' }}>
+                    <Link href="/academics/schedule">
+                        <Calendar />
+                        <span>Horarios</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
