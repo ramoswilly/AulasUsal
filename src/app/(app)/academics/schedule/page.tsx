@@ -26,10 +26,16 @@ import {
   DialogFooter
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { Users, Monitor, Projector } from 'lucide-react'
+import { Users, Projector } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
+
+type AvailableClassroom = Classroom & {
+    futureOccupancy: number;
+    hasCapacity: boolean;
+};
 
 export default function SchedulePage() {
     const [selectedProgram, setSelectedProgram] = React.useState(programs[0].id);
@@ -63,34 +69,50 @@ export default function SchedulePage() {
         );
     }
 
-    const getAvailableClassrooms = (section: Section | null): Classroom[] => {
-        if (!section) return [];
-        
-        return classrooms.filter(classroom => {
-            // Check capacity
-            if (classroom.capacity < section.enrolledStudents) {
-                return false;
+    const getAvailableClassrooms = (sectionToAssign: Section | null): AvailableClassroom[] => {
+        if (!sectionToAssign) return [];
+      
+        const available = classrooms
+          .map(classroom => {
+            // Rule 2: Resources
+            const hasAllResources = sectionToAssign.desiredResources.every(resourceId =>
+              classroom.resources.includes(resourceId)
+            );
+            if (!hasAllResources) return null;
+      
+            // Rule 1 & 3: Schedule Availability and Shared Capacity
+            const conflictingSections = sections.filter(s => 
+              s.assignedClassroomId === classroom.id &&
+              s.id !== sectionToAssign.id &&
+              s.days.some(day => sectionToAssign.days.includes(day)) &&
+              s.startTime === sectionToAssign.startTime
+            );
+      
+            // For this logic, we assume sections are either fully conflicting or not at all.
+            // A more complex system would check for time overlaps.
+            if (conflictingSections.length > 0) {
+                 // Even with conflicts, we need to check capacity for shared rooms.
+                 const currentOccupancy = conflictingSections.reduce((sum, s) => sum + s.enrolledStudents, 0);
+                 const futureOccupancy = currentOccupancy + sectionToAssign.enrolledStudents;
+                 const hasCapacity = futureOccupancy <= classroom.capacity;
+                 return { ...classroom, futureOccupancy, hasCapacity };
             }
 
-            // Check resources
-            const hasAllResources = section.desiredResources.every(resourceId =>
-                classroom.resources.includes(resourceId)
-            );
-            if (!hasAllResources) {
-                return false;
+            // If no conflicts, check base capacity
+            const hasCapacity = sectionToAssign.enrolledStudents <= classroom.capacity;
+            return { ...classroom, futureOccupancy: sectionToAssign.enrolledStudents, hasCapacity };
+    
+          })
+          .filter((c): c is AvailableClassroom => c !== null);
+
+          // Sort by hasCapacity (true first) and then by remaining capacity
+          return available.sort((a, b) => {
+            if (a.hasCapacity !== b.hasCapacity) {
+                return a.hasCapacity ? -1 : 1;
             }
-
-            // Check for time conflicts (basic implementation)
-            const conflictingSection = sections.find(s => 
-                s.assignedClassroomId === classroom.id &&
-                s.id !== section.id &&
-                s.days.some(day => section.days.includes(day)) &&
-                s.startTime === section.startTime
-            );
-
-            return !conflictingSection;
-        });
-    }
+            return (b.capacity - b.futureOccupancy) - (a.capacity - a.futureOccupancy);
+          })
+      }
 
     const handleOpenAssignModal = (section: Section) => {
         setAssigningSection(section);
@@ -245,7 +267,7 @@ export default function SchedulePage() {
                         <span>Recursos: {assigningSection?.desiredResources.map(id => resourceMap.get(id)).join(', ') || 'Ninguno'}</span>
                     </div>
                 </div>
-                <div className="border rounded-md">
+                <div className="border rounded-md max-h-[300px] overflow-y-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -259,7 +281,12 @@ export default function SchedulePage() {
                             {availableClassroomsForModal.map(classroom => (
                                 <TableRow key={classroom.id}>
                                     <TableCell className="font-medium">{classroom.name}</TableCell>
-                                    <TableCell>{assigningSection?.enrolledStudents}/{classroom.capacity}</TableCell>
+                                    <TableCell className={cn(
+                                        "font-medium",
+                                        classroom.hasCapacity ? "text-green-600" : "text-red-600"
+                                    )}>
+                                        {classroom.futureOccupancy}/{classroom.capacity}
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
                                             {classroom.resources.map(id => (
@@ -269,7 +296,11 @@ export default function SchedulePage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Button size="sm" onClick={() => handleAssignClassroom(assigningSection!.id, classroom.id)}>
+                                        <Button 
+                                            size="sm" 
+                                            onClick={() => handleAssignClassroom(assigningSection!.id, classroom.id)}
+                                            disabled={!classroom.hasCapacity}
+                                        >
                                             Asignar
                                         </Button>
                                     </TableCell>
