@@ -88,20 +88,11 @@ export default function SchedulePage() {
               s.startTime === sectionToAssign.startTime
             );
       
-            // For this logic, we assume sections are either fully conflicting or not at all.
-            // A more complex system would check for time overlaps.
-            if (conflictingSections.length > 0) {
-                 // Even with conflicts, we need to check capacity for shared rooms.
-                 const currentOccupancy = conflictingSections.reduce((sum, s) => sum + s.enrolledStudents, 0);
-                 const futureOccupancy = currentOccupancy + sectionToAssign.enrolledStudents;
-                 const hasCapacity = futureOccupancy <= classroom.capacity;
-                 return { ...classroom, futureOccupancy, hasCapacity };
-            }
+            const currentOccupancy = conflictingSections.reduce((sum, s) => sum + s.enrolledStudents, 0);
+            const futureOccupancy = currentOccupancy + sectionToAssign.enrolledStudents;
+            const hasCapacity = futureOccupancy <= classroom.capacity;
 
-            // If no conflicts, check base capacity
-            const hasCapacity = sectionToAssign.enrolledStudents <= classroom.capacity;
-            return { ...classroom, futureOccupancy: sectionToAssign.enrolledStudents, hasCapacity };
-    
+            return { ...classroom, futureOccupancy, hasCapacity };
           })
           .filter((c): c is AvailableClassroom => c !== null);
 
