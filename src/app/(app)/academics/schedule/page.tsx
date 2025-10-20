@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from 'react'
@@ -126,7 +127,6 @@ export default function SchedulePage() {
     }
     
     const handleAssignClassroom = (sectionId: string, classroomId: string) => {
-        // This is a mock update. In a real app, you'd call a server action.
         setSections(prevSections => 
             prevSections.map(s => 
                 s.id === sectionId ? { ...s, assignedClassroomId: classroomId } : s
@@ -142,31 +142,42 @@ export default function SchedulePage() {
     const handleAutoAssign = async () => {
         setIsAssigning(true)
         setAssignmentResult(null)
-        const result = await runAutoAssignment()
-        setAssignmentResult(result)
-        setIsAssigning(false)
-        toast({
-            title: result.success ? "Proceso Completado" : "Error",
-            description: result.message,
-            variant: result.success ? "default" : "destructive",
-        })
-        if (result.success) {
-            // NOTE: In a real app you'd refetch data here.
-            // For now, we'll just show the result.
-            // Or, we could optimistically update the state. Let's do that for the demo.
-            setSections(prevSections => {
-                const newSections = [...prevSections];
-                result.assignedSections?.forEach(assignment => {
-                    const sectionIndex = newSections.findIndex(s => s.id === assignment.sectionId);
-                    if (sectionIndex > -1) {
-                        newSections[sectionIndex] = {
-                            ...newSections[sectionIndex],
-                            assignedClassroomId: assignment.classroomId
-                        };
-                    }
+        try {
+            const result = await runAutoAssignment()
+            setAssignmentResult(result)
+            
+            if (result.success) {
+                setSections(prevSections => {
+                    const newSections = [...prevSections];
+                    result.assignedSections?.forEach(assignment => {
+                        const sectionIndex = newSections.findIndex(s => s.id === assignment.sectionId);
+                        if (sectionIndex > -1) {
+                            newSections[sectionIndex] = {
+                                ...newSections[sectionIndex],
+                                assignedClassroomId: assignment.classroomId
+                            };
+                        }
+                    });
+                    return newSections;
                 });
-                return newSections;
+            }
+            toast({
+                title: result.success ? "Proceso Completado" : "Proceso con Errores",
+                description: result.message,
+                variant: result.success && result.unassignedCount === 0 ? "default" : "destructive",
+            })
+        } catch (error) {
+            console.error("Error running auto-assignment:", error);
+            const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
+            setAssignmentResult({
+                success: false,
+                message: errorMessage,
+                assignedCount: 0,
+                unassignedCount: allSections.filter(s => !s.assignedClassroomId).length,
+                failureSummary: 'La simulación local falló. Revise la consola para más detalles.'
             });
+        } finally {
+            setIsAssigning(false)
         }
     }
 
