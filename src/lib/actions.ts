@@ -17,8 +17,8 @@ export type AssignmentResult = {
 function getProgramIdForSection(section: Section): string {
     const course = courses.find(c => c.id === section.courseId);
     if (!course) return 'unknown';
-    const program = programs.find(p => p.id === course.programId);
-    return program?.id || 'unknown';
+    // The course itself has programId, no need to look up in programs table
+    return course.programId || 'unknown';
 }
 
 export async function runAutoAssignment(): Promise<AssignmentResult> {
