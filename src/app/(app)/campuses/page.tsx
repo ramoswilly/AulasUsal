@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NuevaSedeModal } from "./[campusId]/NuevaSedeModal";
+import { NuevaSedeModal } from "./(alta-sede)/NuevaSedeModal";
 
 export default async function CampusesPage() {
   const sedes = await getSedes();
