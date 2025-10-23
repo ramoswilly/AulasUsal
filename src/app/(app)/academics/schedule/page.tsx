@@ -1,16 +1,11 @@
-import { getComisiones, getCarreras, getAulas } from '@/lib/data';
-import { ScheduleTable } from './schedule-table'; // Asumiendo que el componente se llama así
+import { getAulas, getMaterias, getCarreras, getComisiones } from '@/lib/data'
+import { ScheduleClient } from './schedule-client'
 
 export default async function SchedulePage() {
-  const comisiones = await getComisiones();
-  const carreras = await getCarreras();
-  const aulas = await getAulas();
+  const courses = await getMaterias();
+  const programs = await getCarreras();
+  const allSections = await getComisiones();
+  const classrooms = await getAulas();
 
-  return (
-    <ScheduleTable 
-      initialSections={comisiones}
-      initialPrograms={carreras}
-      initialClassrooms={aulas}
-    />
-  );
+  return <ScheduleClient courses={courses} programs={programs} allSections={allSections} classrooms={classrooms} />
 }

@@ -1,7 +1,7 @@
 
 'use server'
 
-import { classrooms, sections as allSections, courses } from '@/lib/data'
+import { getAulas, getComisiones, getMaterias } from '@/lib/data'
 import { Section } from './types'
 
 export type AssignmentResult = {
@@ -14,18 +14,21 @@ export type AssignmentResult = {
   unassignedSections?: { sectionId: string; reason: string }[];
 }
 
-function getProgramIdForSection(section: Section): string {
+function getProgramIdForSection(section: Section, courses: any[]): string {
     const course = courses.find(c => c.id === section.courseId);
     return course?.programId || 'unknown';
 }
 
-function getCourseForSection(section: Section) {
+function getCourseForSection(section: Section, courses: any[]) {
     return courses.find(c => c.id === section.courseId);
 }
 
 
 export async function runAutoAssignment(): Promise<AssignmentResult> {
+    let allSections: any[] = [];
   try {
+    allSections = await getComisiones();
+    const classrooms = await getAulas();
     const sectionsToAssign = allSections.filter(s => !s.assignedClassroomId);
     const assignedSections: { sectionId: string; classroomId: string }[] = [];
     const unassignedSections: { sectionId: string; reason: string }[] = [];
