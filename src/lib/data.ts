@@ -1,14 +1,22 @@
-import connectToDB from './mongodb';
-import Sede from '../models/Sede';
-import Edificio from '../models/Edificio';
-import Aula from '../models/Aula';
-import Materia from '../models/Materia';
-import Comision from '../models/Comision';
-import Carrera from '../models/Carrera'; // Import Carrera
-import { unstable_noStore as noStore } from 'next/cache';
+import connectToDB from "./mongodb";
+import Sede from "../models/Sede";
+import Edificio from "../models/Edificio";
+import Aula from "../models/Aula";
+import Materia from "../models/Materia";
+import Comision from "../models/Comision";
+import Carrera from "../models/Carrera"; // Import Carrera
+import { unstable_noStore as noStore } from "next/cache";
 
 // Helper to serialize MongoDB documents to plain objects
-const serialize = (doc) => JSON.parse(JSON.stringify(doc));
+export function serialize(docs) {
+  return JSON.parse(
+    JSON.stringify(docs, (key, value) =>
+      typeof value === "object" && value?._bsontype === "ObjectID"
+        ? value.toString()
+        : value
+    )
+  );
+}
 
 // --- SEDE ---
 export async function getSedes() {
@@ -18,8 +26,8 @@ export async function getSedes() {
     const sedes = await Sede.find({});
     return serialize(sedes);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch sedes.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch sedes.");
   }
 }
 
@@ -30,8 +38,8 @@ export async function getSedeById(id) {
     const sede = await Sede.findById(id);
     return serialize(sede);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch sede.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch sede.");
   }
 }
 
@@ -40,11 +48,11 @@ export async function getEdificios() {
   noStore();
   try {
     await connectToDB();
-    const edificios = await Edificio.find({}).populate('sede_id');
+    const edificios = await Edificio.find({}).populate("sede_id");
     return serialize(edificios);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch edificios.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch edificios.");
   }
 }
 
@@ -52,11 +60,11 @@ export async function getEdificioById(id) {
   noStore();
   try {
     await connectToDB();
-    const edificio = await Edificio.findById(id).populate('sede_id');
+    const edificio = await Edificio.findById(id).populate("sede_id");
     return serialize(edificio);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch edificio.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch edificio.");
   }
 }
 
@@ -67,8 +75,8 @@ export async function getEdificiosBySede(sedeId) {
     const edificios = await Edificio.find({ sede_id: sedeId });
     return serialize(edificios);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch edificios for sede.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch edificios for sede.");
   }
 }
 
@@ -78,28 +86,28 @@ export async function getAulas() {
   try {
     await connectToDB();
     const aulas = await Aula.find({}).populate({
-        path: 'edificio_id',
-        populate: {
-            path: 'sede_id'
-        }
+      path: "edificio_id",
+      populate: {
+        path: "sede_id",
+      },
     });
     return serialize(aulas);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch aulas.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch aulas.");
   }
 }
 
 export async function getAulasByEdificio(edificioId) {
-    noStore();
-    try {
-      await connectToDB();
-      const aulas = await Aula.find({ edificio_id: edificioId });
-      return serialize(aulas);
-    } catch (error) {
-      console.error('Database Error:', error);
-      throw new Error('Failed to fetch aulas for edificio.');
-    }
+  noStore();
+  try {
+    await connectToDB();
+    const aulas = await Aula.find({ edificio_id: edificioId });
+    return serialize(aulas);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch aulas for edificio.");
+  }
 }
 
 // --- CARRERA ---
@@ -110,8 +118,8 @@ export async function getCarreras() {
     const carreras = await Carrera.find({});
     return serialize(carreras);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch carreras.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch carreras.");
   }
 }
 
@@ -120,11 +128,11 @@ export async function getMaterias() {
   noStore();
   try {
     await connectToDB();
-    const materias = await Materia.find({}).populate('carrera_id');
+    const materias = await Materia.find({}).populate("carrera_id");
     return serialize(materias);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch materias.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch materias.");
   }
 }
 
@@ -134,12 +142,12 @@ export async function getComisiones() {
   try {
     await connectToDB();
     const comisiones = await Comision.find({})
-      .populate('materia_ids')
-      .populate('asignacion.aula_id');
+      .populate("materia_ids")
+      .populate("asignacion.aula_id");
     return serialize(comisiones);
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch comisiones.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch comisiones.");
   }
 }
 
