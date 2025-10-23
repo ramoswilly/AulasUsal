@@ -1,0 +1,71 @@
+// Usar dbdiagram.io para visualizar este diagrama.
+
+Enum Turno {
+  "MAÑANA"
+  "TARDE"
+  "NOCHE"
+}
+
+Enum DiaSemana {
+  "LUNES"
+  "MARTES"
+  "MIERCOLES"
+  "JUEVES"
+  "VIERNES"
+  "SABADO"
+}
+
+Table Sede {
+  id integer [primary key]
+  nombre varchar [unique, not null]
+  direccion varchar
+}
+
+Table Edificios {
+  id integer [primary key]
+  nombre varchar [not null]
+  campus_id integer [ref: > Sede.id]
+  tipo varchar //Centro Tecnologico, Veterinaria, Módulo, Genérico
+}
+
+Table Aulas {
+  id integer [primary key]
+  nombre_o_numero varchar [not null]
+  capacidad integer [not null]
+  tipo_aula varchar // E.g., 'Laboratorio', 'Anfiteatro', 'Común'
+  edificio_id integer [ref: > Edificios.id]
+}
+
+Table Carreras {
+  id integer [primary key]
+  nombre_carrera varchar [unique, not null]
+
+}
+
+Table Materias {
+  id integer [primary key]
+  nombre_materia varchar [unique, not null]
+  carrera_id integer [ref: > Carreras.id]
+  anio_carrera integer
+  cuatrimestre integer
+}
+
+Table Comisiones {
+  id integer [primary key]
+  nombre_comision varchar [not null] // E.g., 'Comisión 1', 'Comisión A'
+  dia DiaSemana
+  turno Turno
+  aula_id integer [ref: > Aulas.id]
+  fecha_asignacion date [default: `now()`]
+  inscriptos integer
+  profesor varchar
+}
+
+Table comisiones_materias {
+  materia_id integer [ref: > Materias.id]
+  comision_id integer [ref: > Comisiones.id]
+
+  Indexes {
+    (materia_id, comision_id) [pk]
+  }
+}

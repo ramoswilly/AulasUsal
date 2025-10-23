@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Building2, PlusCircle } from 'lucide-react'
 
-import { campuses, buildings } from '@/lib/data'
+import { getSedes, getEdificios } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,7 +13,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export default function CampusesPage() {
+export default async function CampusesPage() {
+  const sedes = await getSedes();
+  const edificios = await getEdificios();
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
@@ -27,27 +30,27 @@ export default function CampusesPage() {
         }
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {campuses.map((campus) => {
-          const buildingCount = buildings.filter(b => b.campusId === campus.id).length;
+        {sedes.map((campus) => {
+          const buildingCount = edificios.filter(b => b.sede_id._id === campus._id).length;
           return (
-            <Card key={campus.id}>
+            <Card key={campus._id}>
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <Building2 className="size-8 text-accent" />
                     <div>
-                      <CardTitle className="font-headline">{campus.name}</CardTitle>
+                      <CardTitle className="font-headline">{campus.nombre}</CardTitle>
                       <CardDescription>{buildingCount} {buildingCount === 1 ? 'edificio' : 'edificios'}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Gestione los edificios y aulas de la {campus.name}.
+                    Gestione los edificios y aulas de la {campus.nombre}.
                   </p>
                 </CardContent>
                 <CardFooter>
                     <Button asChild className="w-full" variant="outline">
-                        <Link href={`/campuses/${campus.id}`}>
+                        <Link href={`/campuses/${campus._id}`}>
                             Ver Edificios
                         </Link>
                     </Button>

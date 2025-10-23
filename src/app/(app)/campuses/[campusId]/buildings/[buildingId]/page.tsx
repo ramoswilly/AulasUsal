@@ -1,6 +1,6 @@
 import { DoorOpen, PlusCircle, Users } from 'lucide-react'
 
-import { buildings, campuses, classrooms, resources } from '@/lib/data'
+import { getSedeById, getEdificioById, getAulasByEdificio } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,25 +11,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 
-export default function BuildingDetailPage({ params }: { params: { campusId: string; buildingId: string } }) {
-  const campus = campuses.find((c) => c.id === params.campusId)
-  const building = buildings.find((b) => b.id === params.buildingId)
+export default async function BuildingDetailPage({ params }: { params: { campusId: string; buildingId: string } }) {
+  const campus = await getSedeById(params.campusId);
+  const building = await getEdificioById(params.buildingId);
   if (!campus || !building) return <div className="p-8">Edificio no encontrado.</div>
 
-  const buildingClassrooms = classrooms.filter((c) => c.buildingId === building.id)
-  const resourceMap = new Map(resources.map(r => [r.id, r.name]));
+  const buildingClassrooms = await getAulasByEdificio(params.buildingId);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
-        title={building.name}
+        title={building.nombre}
         breadcrumbs={[
           { href: '/dashboard', label: 'Home' },
           { href: '/campuses', label: 'Infraestructura' },
-          { href: `/campuses/${campus.id}`, label: campus.name },
-          { href: `/campuses/${campus.id}/buildings/${building.id}`, label: building.name },
+          { href: `/campuses/${campus._id}`, label: campus.nombre },
+          { href: `/campuses/${campus._id}/buildings/${building._id}`, label: building.nombre },
         ]}
         action={
           <Button>
@@ -44,31 +42,26 @@ export default function BuildingDetailPage({ params }: { params: { campusId: str
                 <TableRow>
                     <TableHead>Aula</TableHead>
                     <TableHead>Capacidad</TableHead>
-                    <TableHead>Recursos</TableHead>
+                    <TableHead>Tipo</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {buildingClassrooms.map((classroom) => (
-                    <TableRow key={classroom.id}>
+                    <TableRow key={classroom._id}>
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <DoorOpen className="size-5 text-muted-foreground" />
-                                <span className="font-medium">{classroom.name}</span>
+                                <span className="font-medium">{classroom.nombre_o_numero}</span>
                             </div>
                         </TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 <Users className="size-4 text-muted-foreground" />
-                                <span>{classroom.capacity}</span>
+                                <span>{classroom.capacidad}</span>
                             </div>
                         </TableCell>
                         <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                                {classroom.resources.map(resId => (
-                                    <Badge key={resId} variant="outline">{resourceMap.get(resId) || 'N/A'}</Badge>
-                                ))}
-                                {classroom.resources.length === 0 && <span className="text-xs text-muted-foreground">Ninguno</span>}
-                            </div>
+                            <span className="text-sm text-muted-foreground">{classroom.tipo_aula}</span>
                         </TableCell>
                     </TableRow>
                 ))}
