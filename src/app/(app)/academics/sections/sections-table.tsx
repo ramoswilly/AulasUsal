@@ -1,10 +1,8 @@
-
 'use client'
 
 import * as React from 'react'
 import { Loader2, Users } from 'lucide-react'
 
-import type { Program, Classroom } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 
 import {
@@ -22,27 +20,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 
-type EnrichedSection = {
-    id: string;
-    courseId: string;
-    enrolledStudents: number;
-    days: string[];
-    startTime: string;
-    endTime: string;
-    desiredResources: string[];
-    assignedClassroomId?: string | undefined;
-    courseName: string;
-    programId: string;
-    programName: string;
-    assignedClassroomName?: string;
-    desiredResourcesNames: string[];
+// NOTE: These types are illustrative of the data structure after serialization
+type Section = {
+  _id: string;
+  nombre_comision: string;
+  inscriptos: number;
+  horario: { dia: string; turno: string; };
+  asignacion?: { aula_id?: { _id: string; nombre_o_numero: string; } };
+  materia_ids: { _id: string; nombre_materia: string; carrera_id: { _id: string; nombre_carrera: string; } }[];
 }
+type Program = { _id: string; nombre_carrera: string; }
+type Classroom = { _id: string; nombre_o_numero: string; capacidad: number; }
+
 
 type SectionsTableProps = {
-  sections: EnrichedSection[]
+  sections: Section[]
   programs: Program[]
   classrooms: Classroom[]
 }
@@ -59,17 +53,17 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
   
   const handleManualAssignment = (sectionId: string, classroomId: string) => {
     console.log(`Manually assigning section ${sectionId} to classroom ${classroomId}`);
-    // Here you would call a server action to update the assignment in the DB
-    // and show a warning if rules are violated.
     toast({
         title: "Asignación Manual",
         description: `La comisión ${sectionId} fue asignada al aula. En una app real, esto se guardaría.`,
     });
   }
 
-  const filteredSections = sections.filter(
-    (s) => filter === 'all' || s.programId === filter
-  )
+  const filteredSections = sections.filter((s) => {
+    if (filter === 'all') return true;
+    // Check if any of the materias in the comision belongs to the filtered carrera
+    return s.materia_ids.some(m => m.carrera_id._id === filter);
+  });
 
   if (!isClient) {
     return (
@@ -94,8 +88,8 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
             <SelectContent>
               <SelectItem value="all">Todas las Carreras</SelectItem>
               {programs.map((program) => (
-                <SelectItem key={program.id} value={program.id}>
-                  {program.name}
+                <SelectItem key={program._id} value={program._id}>
+                  {program.nombre_carrera}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -107,45 +101,36 @@ export function SectionsTable({ sections, programs, classrooms }: SectionsTableP
               <TableRow>
                 <TableHead>Comisión</TableHead>
                 <TableHead>Horario</TableHead>
-                <TableHead>Recursos</TableHead>
                 <TableHead>Aula Asignada</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSections.map((section) => (
-                <TableRow key={section.id}>
+                <TableRow key={section._id}>
                   <TableCell>
-                    <div className="font-medium">{section.courseName}</div>
-                    <div className="text-sm text-muted-foreground">{section.programName}</div>
+                    <div className="font-medium">{section.materia_ids.map(m => m.nombre_materia).join(', ')}</div>
+                    <div className="text-sm text-muted-foreground">{section.nombre_comision}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <Users className="size-4 text-muted-foreground"/>
-                        <span className="text-sm">{section.enrolledStudents}</span>
+                        <span className="text-sm">{section.inscriptos}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>{section.days.join(', ')}</div>
-                    <div className="text-sm text-muted-foreground">{section.startTime} - {section.endTime}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                        {section.desiredResourcesNames.map((name, i) => (
-                            <Badge key={i} variant="secondary">{name}</Badge>
-                        ))}
-                         {section.desiredResources.length === 0 && <span className="text-xs text-muted-foreground">Ninguno</span>}
-                    </div>
+                    <div>{section.horario.dia}</div>
+                    <div className="text-sm text-muted-foreground">{section.horario.turno}</div>
                   </TableCell>
                   <TableCell>
                     <Select
-                      defaultValue={section.assignedClassroomId}
-                      onValueChange={(value) => handleManualAssignment(section.id, value)}
+                      defaultValue={section.asignacion?.aula_id?._id}
+                      onValueChange={(value) => handleManualAssignment(section._id, value)}
                     >
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[220px]">
                         <SelectValue placeholder="Asignar aula..." />
                       </SelectTrigger>
                       <SelectContent>
                         {classrooms.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name} ({c.capacity})
+                          <SelectItem key={c._id} value={c._id}>
+                            {c.nombre_o_numero} ({c.capacidad})
                           </SelectItem>
                         ))}
                       </SelectContent>

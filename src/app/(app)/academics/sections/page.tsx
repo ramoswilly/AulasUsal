@@ -1,25 +1,13 @@
-import { sections, courses, programs, classrooms, resources } from '@/lib/data'
+import { getComisiones, getCarreras, getAulas } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import { SectionsTable } from './sections-table'
 
-export default function SectionsPage() {
-
-  const courseMap = new Map(courses.map(c => [c.id, c.name]));
-  const programMap = new Map(programs.map(p => [p.id, p.name]));
-  const classroomMap = new Map(classrooms.map(c => [c.id, c.name]));
-  const resourceMap = new Map(resources.map(r => [r.id, r.name]));
-
-  const enrichedSections = sections.map(section => {
-    const course = courses.find(c => c.id === section.courseId);
-    return {
-      ...section,
-      courseName: course?.name || 'N/A',
-      programId: course?.programId || 'N/A',
-      programName: programMap.get(course?.programId || '') || 'N/A',
-      assignedClassroomName: classroomMap.get(section.assignedClassroomId || ''),
-      desiredResourcesNames: section.desiredResources.map(id => resourceMap.get(id) || 'N/A'),
-    }
-  });
+export default async function SectionsPage() {
+  // Fetch all necessary data directly from the database.
+  // The 'populate' in the data functions handles the enrichment automatically.
+  const comisiones = await getComisiones();
+  const carreras = await getCarreras();
+  const aulas = await getAulas();
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -31,9 +19,9 @@ export default function SectionsPage() {
         ]}
       />
       <SectionsTable 
-        sections={enrichedSections} 
-        programs={programs}
-        classrooms={classrooms}
+        sections={comisiones}
+        programs={carreras}      // Renamed from programs to carreras
+        classrooms={aulas}
       />
     </div>
   )

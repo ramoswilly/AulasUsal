@@ -16,43 +16,52 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/page-header'
-import { campuses, buildings, classrooms, programs, courses, sections } from '@/lib/data'
+import { getSedes, getEdificios, getAulas, getCarreras, getComisiones } from '@/lib/data'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+
+  const [sedes, edificios, aulas, carreras, comisiones] = await Promise.all([
+    getSedes(),
+    getEdificios(),
+    getAulas(),
+    getCarreras(),
+    getComisiones(),
+  ]);
+
   const stats = [
     {
       title: 'Sedes',
-      value: campuses.length,
+      value: sedes.length,
       icon: <Building2 className="size-5 text-muted-foreground" />,
       href: '/campuses'
     },
     {
       title: 'Edificios',
-      value: buildings.length,
+      value: edificios.length,
       icon: <Building className="size-5 text-muted-foreground" />,
       href: '/campuses'
     },
     {
       title: 'Aulas',
-      value: classrooms.length,
+      value: aulas.length,
       icon: <DoorOpen className="size-5 text-muted-foreground" />,
       href: '/campuses'
     },
     {
       title: 'Carreras',
-      value: programs.length,
+      value: carreras.length,
       icon: <BookMarked className="size-5 text-muted-foreground" />,
-      href: '/academics/programs'
+      href: '/academics/courses'
     },
     {
       title: 'Comisiones',
-      value: sections.length,
+      value: comisiones.length,
       icon: <Users className="size-5 text-muted-foreground" />,
       href: '/academics/sections'
     },
   ]
   
-  const unassignedSections = sections.filter(s => !s.assignedClassroomId).length;
+  const unassignedSections = comisiones.filter(c => !c.asignacion?.aula_id).length;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -82,7 +91,7 @@ export default function DashboardPage() {
               Actualmente hay <span className="font-bold text-foreground">{unassignedSections}</span> comisiones sin aula asignada. Utilice la herramienta de auto-asignación para optimizar el uso de los recursos.
             </p>
             <Button asChild>
-              <Link href="/academics/sections">
+              <Link href="/academics/schedule">
                 Ir a Asignación <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>

@@ -1,5 +1,5 @@
 import { PlusCircle } from 'lucide-react'
-import { courses, programs } from '@/lib/data'
+import { getCarreras, getMaterias } from '@/lib/data'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,9 +16,10 @@ import {
 } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-function ProgramsTable() {
-    const courseCountMap = courses.reduce((acc, course) => {
-        acc.set(course.programId, (acc.get(course.programId) || 0) + 1);
+function CarrerasTable({ carreras, materias }) {
+    const courseCountMap = materias.reduce((acc, materia) => {
+        const carreraId = materia.carrera_id._id;
+        acc.set(carreraId, (acc.get(carreraId) || 0) + 1);
         return acc;
     }, new Map<string, number>());
 
@@ -33,10 +34,10 @@ function ProgramsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {programs.map((program) => (
-                  <TableRow key={program.id}>
-                    <TableCell className="font-medium">{program.name}</TableCell>
-                    <TableCell className="text-right">{courseCountMap.get(program.id) || 0}</TableCell>
+              {carreras.map((carrera) => (
+                  <TableRow key={carrera._id}>
+                    <TableCell className="font-medium">{carrera.nombre_carrera}</TableCell>
+                    <TableCell className="text-right">{courseCountMap.get(carrera._id) || 0}</TableCell>
                   </TableRow>
               ))}
             </TableBody>
@@ -46,8 +47,7 @@ function ProgramsTable() {
     )
 }
 
-function CoursesTable() {
-    const programMap = new Map(programs.map(p => [p.id, p.name]));
+function MateriasTable({ materias }) {
     return (
         <Card>
         <CardContent className="p-0">
@@ -59,10 +59,10 @@ function CoursesTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {courses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell className="font-medium">{course.name}</TableCell>
-                  <TableCell>{programMap.get(course.programId) || 'N/A'}</TableCell>
+              {materias.map((materia) => (
+                <TableRow key={materia._id}>
+                  <TableCell className="font-medium">{materia.nombre_materia}</TableCell>
+                  <TableCell>{materia.carrera_id?.nombre_carrera || 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -73,7 +73,10 @@ function CoursesTable() {
 }
 
 
-export default function AcademicsPage() {
+export default async function AcademicsPage() {
+  const carreras = await getCarreras();
+  const materias = await getMaterias();
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
@@ -95,10 +98,10 @@ export default function AcademicsPage() {
             </Button>
         </div>
         <TabsContent value="programs">
-          <ProgramsTable />
+          <CarrerasTable carreras={carreras} materias={materias} />
         </TabsContent>
         <TabsContent value="courses">
-          <CoursesTable />
+          <MateriasTable materias={materias} />
         </TabsContent>
       </Tabs>
     </div>
