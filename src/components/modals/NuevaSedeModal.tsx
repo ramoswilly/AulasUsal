@@ -34,10 +34,12 @@ export function NuevaSedeModal() {
     }
     setLoading(true);
     try {
+      const payload = { nombre, direccion };
+
       const res = await fetch("/api/sedes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, direccion }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
