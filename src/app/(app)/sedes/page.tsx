@@ -20,10 +20,10 @@ export default async function CampusesPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
-        title="Infraestructura"
+        title="Sedes"
         breadcrumbs={[
           { href: "/dashboard", label: "Home" },
-          { href: "/campuses", label: "Infraestructura" },
+          { href: "/sedes", label: "Sedes" },
         ]}
         action={<NuevaSedeModal />}
       />
@@ -55,7 +55,7 @@ export default async function CampusesPage() {
               </CardContent>
               <CardFooter>
                 <Button asChild className="w-full" variant="outline">
-                  <Link href={`/campuses/${sede._id}`}>Ver Edificios</Link>
+                  <Link href={`/sedes/${sede._id}`}>Ver Edificios</Link>
                 </Button>
               </CardFooter>
             </Card>

@@ -1,8 +1,7 @@
+"use client";
 
-'use client'
-
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   BookMarked,
   Building2,
@@ -12,7 +11,7 @@ import {
   PanelLeft,
   Settings,
   Users,
-} from 'lucide-react'
+} from "lucide-react";
 
 import {
   SidebarProvider,
@@ -25,10 +24,10 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-} from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
-import { Icons } from '@/components/icons'
-import { useIsMobile } from '@/hooks/use-mobile'
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,38 +35,52 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import placeholderImages from '@/lib/placeholder-images.json'
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import placeholderImages from "@/lib/placeholder-images.json";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const isMobile = useIsMobile()
+  const pathname = usePathname();
+  const isMobile = useIsMobile();
 
   const isActive = (path: string) => {
-    return pathname === path || pathname.startsWith(`${path}/`)
-  }
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader>
+        <SidebarHeader className="p-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="size-9 shrink-0 lg:hidden" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-9 shrink-0 lg:hidden"
+              asChild
+            >
               <SidebarTrigger>
                 <PanelLeft className="size-5" />
               </SidebarTrigger>
             </Button>
-            <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold text-lg">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 font-headline font-semibold text-lg"
+            >
               <Icons.logo className="size-6" />
-              <span className="group-data-[collapsible=icon]:hidden">AulaSync</span>
+              <span className="group-data-[collapsible=icon]:hidden">
+                Aulas USAL
+              </span>
             </Link>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="p-3">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isActive('/dashboard')} tooltip={{ children: 'Dashboard' }}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/dashboard")}
+                tooltip={{ children: "Dashboard" }}
+              >
                 <Link href="/dashboard">
                   <LayoutDashboard />
                   <span>Dashboard</span>
@@ -75,28 +88,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isActive('/campuses')} tooltip={{ children: 'Infraestructura' }}>
-                <Link href="/campuses">
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/sedes")}
+                tooltip={{ children: "Sedes" }}
+              >
+                <Link href="/sedes">
                   <Building2 />
-                  <span>Infraestructura</span>
+                  <span>Sedes</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/academics/courses')} tooltip={{ children: 'Académico' }}>
-                    <Link href="/academics/courses">
-                        <BookMarked />
-                        <span>Académico</span>
-                    </Link>
-                </SidebarMenuButton>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/academics/courses")}
+                tooltip={{ children: "Académico" }}
+              >
+                <Link href="/academics/courses">
+                  <BookMarked />
+                  <span>Académico</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isActive('/academics/schedule')} tooltip={{ children: 'Horarios' }}>
-                    <Link href="/academics/schedule">
-                        <Calendar />
-                        <span>Horarios</span>
-                    </Link>
-                </SidebarMenuButton>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/academics/schedule")}
+                tooltip={{ children: "Horarios" }}
+              >
+                <Link href="/academics/schedule">
+                  <Calendar />
+                  <span>Horarios</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
@@ -117,7 +142,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Avatar>
                 <div className="text-left group-data-[collapsible=icon]:hidden">
                   <p className="font-medium text-sm leading-tight">Admin</p>
-                  <p className="text-xs text-muted-foreground">admin@aulasync.com</p>
+                  <p className="text-xs text-muted-foreground">
+                    admin@aulasync.com
+                  </p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -139,5 +166,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

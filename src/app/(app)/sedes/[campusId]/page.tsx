@@ -56,8 +56,8 @@ export default async function CampusDetailPage({
         title={campus.nombre}
         breadcrumbs={[
           { href: "/dashboard", label: "Home" },
-          { href: "/campuses", label: "Infraestructura" },
-          { href: `/campuses/${campus._id}`, label: campus.nombre },
+          { href: "/sedes", label: "Sedes" },
+          { href: `/sedes/${campus._id}`, label: campus.nombre },
         ]}
         action={<NuevoEdificioModal campusId={campus._id} />}
       />
@@ -99,7 +99,7 @@ export default async function CampusDetailPage({
                   <TableCell>
                     <Button variant="ghost" size="icon" asChild>
                       <Link
-                        href={`/campuses/${campus._id}/buildings/${building._id}`}
+                        href={`/sedes/${campus._id}/buildings/${building._id}`}
                       >
                         <ChevronsRight className="h-4 w-4" />
                       </Link>
