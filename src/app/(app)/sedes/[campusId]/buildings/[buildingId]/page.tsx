@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AltaAulaModal } from "@/components/modals/sedes/AltaAulaModal";
 
 export default async function BuildingDetailPage({
   params,
@@ -37,12 +38,7 @@ export default async function BuildingDetailPage({
             label: building.nombre,
           },
         ]}
-        action={
-          <Button>
-            <PlusCircle className="mr-2" />
-            Nueva Aula
-          </Button>
-        }
+        action={<AltaAulaModal edificioId={building._id} />}
       />
       <div className="border rounded-lg">
         <Table>

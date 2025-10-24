@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
 
-export function NuevaSedeModal() {
+export function AltaSedeModal() {
   const [open, setOpen] = React.useState(false);
   const [nombre, setNombre] = React.useState("");
   const [direccion, setDireccion] = React.useState("");

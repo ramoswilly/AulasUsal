@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NuevaSedeModal } from "@/components/modals/NuevaSedeModal";
+import { AltaSedeModal } from "@/components/modals/sedes/AltaSedeModal";
 
 export default async function CampusesPage() {
   const sedes = await getSedes();
@@ -25,7 +25,7 @@ export default async function CampusesPage() {
           { href: "/dashboard", label: "Home" },
           { href: "/sedes", label: "Sedes" },
         ]}
-        action={<NuevaSedeModal />}
+        action={<AltaSedeModal />}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sedes.map((sede) => {

@@ -26,7 +26,7 @@ interface NuevaProps {
   campusId: string;
 }
 
-export function NuevoEdificioModal({ campusId }: NuevaProps) {
+export function AltaEdificioModal({ campusId }: NuevaProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [nombre, setNombre] = React.useState("");

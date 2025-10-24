@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { NuevoEdificioModal } from "@/components/modals/NuevoEdificioModal";
+import { AltaEdificioModal } from "@/components/modals/sedes/AltaEdificioModal";
 
 export function getBuildingIcon(tipo: string) {
   switch (tipo) {
@@ -55,7 +55,7 @@ export default async function CampusDetailPage({
           { href: "/sedes", label: "Sedes" },
           { href: `/sedes/${sede._id}`, label: sede.nombre },
         ]}
-        action={<NuevoEdificioModal campusId={sede._id} />}
+        action={<AltaEdificioModal campusId={sede._id} />}
       />
 
       <div className="border rounded-lg">
