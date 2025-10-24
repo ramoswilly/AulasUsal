@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   Building,
   Factory,
-  School,
   FlaskConical,
   Stethoscope,
   ChevronsRight,
@@ -20,17 +19,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { NuevoEdificioModal } from "@/components/modals/NuevoEdificioModal";
-import { log } from "console";
 
-function getBuildingIcon(tipo: string) {
+export function getBuildingIcon(tipo: string) {
   switch (tipo) {
-    case "Tecnológico":
+    case "Centro Tecnológico":
       return <Factory className="h-5 w-5 text-muted-foreground" />;
-    case "Carrera":
-      return <School className="h-5 w-5 text-muted-foreground" />;
     case "Laboratorio":
       return <FlaskConical className="h-5 w-5 text-muted-foreground" />;
-    case "Veterinaria":
+    case "Edificio veterinario":
       return <Stethoscope className="h-5 w-5 text-muted-foreground" />;
     default:
       return <Building className="h-5 w-5 text-muted-foreground" />;
@@ -44,8 +40,8 @@ export default async function CampusDetailPage({
 }) {
   const { campusId } = await params;
 
-  const campus = await getSedeById(campusId);
-  if (!campus) return <div className="p-8">Sede no encontrada.</div>;
+  const sede = await getSedeById(campusId);
+  if (!sede) return <div className="p-8">Sede no encontrada.</div>;
 
   const campusBuildings = await getEdificiosBySede(campusId);
   const allAulas = await getAulas();
@@ -53,13 +49,13 @@ export default async function CampusDetailPage({
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
-        title={campus.nombre}
+        title={sede.nombre}
         breadcrumbs={[
           { href: "/dashboard", label: "Home" },
           { href: "/sedes", label: "Sedes" },
-          { href: `/sedes/${campus._id}`, label: campus.nombre },
+          { href: `/sedes/${sede._id}`, label: sede.nombre },
         ]}
-        action={<NuevoEdificioModal campusId={campus._id} />}
+        action={<NuevoEdificioModal campusId={sede._id} />}
       />
 
       <div className="border rounded-lg">
@@ -91,16 +87,17 @@ export default async function CampusDetailPage({
                   </TableCell>
 
                   <TableCell>
-                    <Badge variant="secondary">{building.tipo}</Badge>
+                    <Badge variant="default">{building.tipo}</Badge>
                   </TableCell>
 
                   <TableCell className="text-right">{classroomCount}</TableCell>
 
                   <TableCell>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button asChild>
                       <Link
-                        href={`/sedes/${campus._id}/buildings/${building._id}`}
+                        href={`/sedes/${sede._id}/buildings/${building._id}`}
                       >
+                        Ver aulas
                         <ChevronsRight className="h-4 w-4" />
                       </Link>
                     </Button>
