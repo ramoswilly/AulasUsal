@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AltaAulaModal } from "@/components/modals/sedes/AltaAulaModal";
+import { EliminarAulaModal } from "@/components/modals/sedes/EliminarAulaModal";
+import { EditarAulaModal } from "@/components/modals/sedes/EditarAulaModal";
 
 export default async function BuildingDetailPage({
   params,
@@ -47,6 +49,7 @@ export default async function BuildingDetailPage({
               <TableHead>Aula</TableHead>
               <TableHead>Capacidad</TableHead>
               <TableHead>Tipo</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,6 +73,19 @@ export default async function BuildingDetailPage({
                   <span className="text-sm text-muted-foreground">
                     {classroom.tipo_aula}
                   </span>
+                </TableCell>
+
+                <TableCell className="flex gap-2 justify-end">
+                  <EditarAulaModal
+                    aulaId={classroom._id}
+                    currentNombre={classroom.nombre_o_numero}
+                    currentTipo={classroom.tipo_aula}
+                    currentCapacidad={classroom.capacidad}
+                  />
+                  <EliminarAulaModal
+                    aulaId={classroom._id}
+                    aulaNombre={classroom.nombre_o_numero}
+                  />
                 </TableCell>
               </TableRow>
             ))}
