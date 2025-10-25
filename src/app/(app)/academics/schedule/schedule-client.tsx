@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils'
 import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
+const timeSlots = ['18:30 a 21:30 hs.'];
 
 export function ScheduleClient({ courses, programs, allSections, classrooms }: { courses: any[], programs: any[], allSections: any[], classrooms: any[] }) {
     const [selectedProgram, setSelectedProgram] = React.useState(programs[0]._id);
@@ -59,22 +59,24 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         // In the new model, a comision has an array of materia_ids
         // Let's find the first materia for now.
         const materia = courses.find(c => c._id === section.materia_ids[0]);
-        return materia ? { id: materia._id, name: materia.nombre, programId: materia.carrera_id._id, year: materia.anio } : undefined;
+        return materia ? { id: materia._id, name: materia.nombre_materia, programId: materia.carrera_id._id, year: materia.anio, semester: materia.cuatrimestre } : undefined;
     }
 
     const getSections = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForYear = sections.filter(s => {
             const course = getCourseForSection(s);
-            // semester is not in the new model, I will ignore it for now
-            return course?.year === year && s.horario.turno.includes(selectedTurn);
+            return course?.year === year && course?.semester === semester && s.horario.turno.includes(selectedTurn);
         });
 
-        const startTime = timeSlot.split(' ')[0];
-
-        return sectionsForYear.filter(s => 
-            s.horario.dia === day &&
-            s.horario.turno.startsWith(startTime) // This might need adjustment
-        );
+        if (timeSlot === '18:30 a 21:30 hs.') {
+            return sectionsForYear.filter(s => s.horario.dia === day);
+        } else {
+            const startTime = timeSlot.split(' ')[0];
+            return sectionsForYear.filter(s => 
+                s.horario.dia === day &&
+                s.horario.turno.startsWith(startTime) // This might need adjustment
+            );
+        }
     }
 
     const getAvailableClassrooms = (sectionToAssign: Section | null): AvailableClassroom[] => {
@@ -228,7 +230,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
             </SelectTrigger>
             <SelectContent>
                 {programs.map(program => (
-                    <SelectItem key={program._id} value={program._id}>{program.nombre}</SelectItem>
+                    <SelectItem key={program._id} value={program._id}>{program.nombre_carrera}</SelectItem>
                 ))}
             </SelectContent>
         </Select>
