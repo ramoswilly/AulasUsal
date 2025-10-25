@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { NuevaSedeModal } from "@/components/modals/NuevaSedeModal";
+import { AltaSedeModal } from "@/components/modals/sedes/AltaSedeModal";
 
 export default async function CampusesPage() {
   const sedes = await getSedes();
@@ -20,12 +20,12 @@ export default async function CampusesPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <PageHeader
-        title="Infraestructura"
+        title="Sedes"
         breadcrumbs={[
           { href: "/dashboard", label: "Home" },
-          { href: "/campuses", label: "Infraestructura" },
+          { href: "/sedes", label: "Sedes" },
         ]}
-        action={<NuevaSedeModal />}
+        action={<AltaSedeModal />}
       />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sedes.map((sede) => {
@@ -55,7 +55,7 @@ export default async function CampusesPage() {
               </CardContent>
               <CardFooter>
                 <Button asChild className="w-full" variant="outline">
-                  <Link href={`/campuses/${sede._id}`}>Ver Edificios</Link>
+                  <Link href={`/sedes/${sede._id}`}>Ver Edificios</Link>
                 </Button>
               </CardFooter>
             </Card>
