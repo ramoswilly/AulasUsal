@@ -20,10 +20,10 @@ export function serialize(docs) {
 
 // --- SEDE ---
 export async function getSedes() {
-  noStore(); // Opt out of static rendering
+  noStore();
   try {
     await connectToDB();
-    const sedes = await Sede.find({});
+    const sedes = await Sede.find({ deletedAt: null });
     return serialize(sedes);
   } catch (error) {
     console.error("Database Error:", error);
@@ -35,7 +35,7 @@ export async function getSedeById(id) {
   noStore();
   try {
     await connectToDB();
-    const sede = await Sede.findById(id);
+    const sede = await Sede.findOne({ _id: id, deletedAt: null });
     return serialize(sede);
   } catch (error) {
     console.error("Database Error:", error);
@@ -48,7 +48,10 @@ export async function getEdificios() {
   noStore();
   try {
     await connectToDB();
-    const edificios = await Edificio.find({}).populate("sede_id");
+    const edificios = await Edificio.find({ deletedAt: null }).populate({
+      path: "sede_id",
+      match: { deletedAt: null },
+    });
     return serialize(edificios);
   } catch (error) {
     console.error("Database Error:", error);
@@ -60,7 +63,13 @@ export async function getEdificioById(id) {
   noStore();
   try {
     await connectToDB();
-    const edificio = await Edificio.findById(id).populate("sede_id");
+    const edificio = await Edificio.findOne({
+      _id: id,
+      deletedAt: null,
+    }).populate({
+      path: "sede_id",
+      match: { deletedAt: null },
+    });
     return serialize(edificio);
   } catch (error) {
     console.error("Database Error:", error);
@@ -72,7 +81,7 @@ export async function getEdificiosBySede(sedeId) {
   noStore();
   try {
     await connectToDB();
-    const edificios = await Edificio.find({ sede_id: sedeId });
+    const edificios = await Edificio.find({ sede_id: sedeId, deletedAt: null });
     return serialize(edificios);
   } catch (error) {
     console.error("Database Error:", error);
@@ -85,10 +94,12 @@ export async function getAulas() {
   noStore();
   try {
     await connectToDB();
-    const aulas = await Aula.find({}).populate({
+    const aulas = await Aula.find({ deletedAt: null }).populate({
       path: "edificio_id",
+      match: { deletedAt: null },
       populate: {
         path: "sede_id",
+        match: { deletedAt: null },
       },
     });
     return serialize(aulas);
@@ -102,7 +113,7 @@ export async function getAulasByEdificio(edificioId) {
   noStore();
   try {
     await connectToDB();
-    const aulas = await Aula.find({ edificio_id: edificioId });
+    const aulas = await Aula.find({ edificio_id: edificioId, deletedAt: null });
     return serialize(aulas);
   } catch (error) {
     console.error("Database Error:", error);
