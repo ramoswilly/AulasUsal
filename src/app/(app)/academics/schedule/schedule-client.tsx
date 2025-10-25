@@ -33,11 +33,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast'
-import { Users, Projector, Bot, Loader2, Sparkles } from 'lucide-react'
+import { Users, Projector, Bot, Loader2, Sparkles, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
 import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
 import type { IComision } from '@/models/Comision'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 21:30 hs.'];
@@ -59,18 +60,29 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const years = selectedProgramData ? Array.from({ length: selectedProgramData.anios }, (_, i) => i + 1) : [];
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
-    const getCourseForSection = (section: Section): Course | undefined => {
-        // This needs to be adapted based on the new data structure
-        // In the new model, a comision has an array of materia_ids
-        // Let's find the first materia for now.
-        const materia = courses.find(c => c._id === section.materia_ids[0]);
-        return materia ? { id: materia._id, name: materia.nombre_materia, programId: materia.carrera_id._id, year: materia.anio, semester: materia.cuatrimestre } : undefined;
-    }
+    const getCourseForSection = (section: any): Course | undefined => {
+        if (!section.materia_ids || section.materia_ids.length === 0) {
+            return undefined;
+        }
+        const materia = section.materia_ids[0];
+        if (!materia) {
+            return undefined;
+        }
+        // When populated, carrera_id is an object.
+        const programId = materia.carrera_id?._id || materia.carrera_id;
+        return {
+            id: materia._id,
+            name: materia.nombre_materia,
+            programId: programId,
+            year: materia.anio_carrera,
+            semester: materia.cuatrimestre,
+        };
+    };
 
     const getSections = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForYear = sections.filter(s => {
             const course = getCourseForSection(s);
-            return course?.year === year && course?.semester === semester && s.horario.turno.includes(selectedTurn);
+            return course?.programId === selectedProgram && course?.year === year && course?.semester === semester && s.horario.turno.includes(selectedTurn);
         });
 
         if (timeSlot === '18:30 a 21:30 hs.') {
@@ -190,38 +202,49 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForCell = getSections(year, timeSlot, day, semester);
         if (sectionsForCell.length === 0) {
-            return <TableCell className="h-20 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
+            return <TableCell className="h-24 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
         }
         
         return (
-            <TableCell className="p-1 align-top h-20 border-r text-xs" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
+            <TableCell className="p-1 align-top h-24 border-r text-xs" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
                 {sectionsForCell.map(section => {
                     const course = getCourseForSection(section);
                     const assignedClassroomName = section.asignacion?.aula_id ? classroomMap.get(section.asignacion.aula_id) : null;
 
                     return (
-                        <div key={section._id} className="bg-muted p-1 rounded-sm h-full flex flex-col justify-center text-center">
-                           <p className="font-bold text-[10px] leading-tight">{course?.name}</p>
-                           <p className="text-muted-foreground text-[9px]">{section.nombre_comision}</p>
-                           {assignedClassroomName ? (
-                             <Button 
-                                variant="link" 
-                                className="text-muted-foreground underline-offset-2 hover:no-underline h-auto p-0 text-[9px]"
-                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
-                            >
-                                {assignedClassroomName}
-                            </Button>
-                           ) : (
-                            <Button 
-                                variant="link" 
-                                className="text-destructive h-auto p-0 text-[9px] font-bold"
-                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
-                            >
-                               Asignar Aula
-                            </Button>
-                           )}
-                           <p className="text-muted-foreground text-[9px] mt-1">{section.profesor}</p>
-                           <p className="text-muted-foreground text-[9px]">{section.inscriptos} inscriptos</p>
+                        <div key={section._id} className="bg-card border rounded-lg p-2 h-full flex flex-col text-left shadow-sm">
+                            <div className="flex justify-between items-start">
+                                <Badge variant="secondary" className="text-[10px] h-6">{section.nombre_comision}</Badge>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Users className="w-4 h-4 mr-1" />
+                                    <span>{section.inscriptos}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center text-sm text-muted-foreground my-auto">
+                                <User className="w-4 h-4 mr-1" />
+                                <span className="truncate">{section.profesor}</span>
+                            </div>
+
+                            <div className="flex justify-end mt-auto">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="w-8 h-8"
+                                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Asignar Aula</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                         </div>
                     )
                 })}
