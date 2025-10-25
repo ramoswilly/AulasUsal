@@ -3,6 +3,9 @@
 
 import { getAulas, getComisiones, getMaterias } from '@/lib/data'
 import { Section } from './types'
+import Comision from "@/models/Comision";
+import Materia from "@/models/Materia";
+import connectToDB from "./mongodb";
 
 export type AssignmentResult = {
   success: boolean
@@ -128,5 +131,30 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
       unassignedCount: allSections.filter(s => !s.assignedClassroomId).length,
       failureSummary: 'No se pudo generar un resumen debido a un error inesperado en el servidor.'
     }
+  }
+}
+
+export async function upsertComision(data: any) {
+  await connectToDB();
+
+  const { _id, nombre_comision, profesor, inscriptos, horario, materia_ids } = data;
+
+  if (_id) {
+    // Update existing comision
+    await Comision.findByIdAndUpdate(_id, {
+      nombre_comision,
+      profesor,
+      inscriptos,
+      materia_ids,
+    });
+  } else {
+    // Create new comision
+    await Comision.create({
+      nombre_comision,
+      profesor,
+      inscriptos,
+      horario,
+      materia_ids,
+    });
   }
 }

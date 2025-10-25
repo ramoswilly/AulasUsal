@@ -36,6 +36,8 @@ import { useToast } from '@/hooks/use-toast'
 import { Users, Projector, Bot, Loader2, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
+import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
+import type { IComision } from '@/models/Comision'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 21:30 hs.'];
@@ -47,11 +49,14 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
     const [isAssigning, setIsAssigning] = React.useState(false)
     const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
+    const [isUpsertComisionModalOpen, setIsUpsertComisionModalOpen] = React.useState(false);
+    const [selectedComision, setSelectedComision] = React.useState<IComision | null>(null);
+    const [modalContext, setModalContext] = React.useState<{ day: string; semester: number; year: number; turn: string; selectedProgram: string; } | null>(null);
 
     const { toast } = useToast();
 
-    const programCourses = courses.filter(c => c.carrera_id._id === selectedProgram);
-    const years = [...new Set(programCourses.map(c => c.anio))].sort((a,b) => a - b);
+    const selectedProgramData = programs.find(p => p._id === selectedProgram);
+    const years = selectedProgramData ? Array.from({ length: selectedProgramData.anios }, (_, i) => i + 1) : [];
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
     const getCourseForSection = (section: Section): Course | undefined => {
@@ -77,6 +82,12 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                 s.horario.turno.startsWith(startTime) // This might need adjustment
             );
         }
+    }
+
+    const handleOpenUpsertModal = (day: string, semester: number, year: number, comision: IComision | null) => {
+        setModalContext({ day, semester, year, turn: selectedTurn, selectedProgram });
+        setSelectedComision(comision);
+        setIsUpsertComisionModalOpen(true);
     }
 
     const getAvailableClassrooms = (sectionToAssign: Section | null): AvailableClassroom[] => {
@@ -176,23 +187,27 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const courseForModal = assigningSection ? getCourseForSection(assigningSection) : null;
     const availableClassroomsForModal = getAvailableClassrooms(assigningSection);
 
-    const renderCell = (sections: Section[]) => {
-        if (sections.length === 0) return <TableCell className="h-20 border-r"></TableCell>;
+    const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
+        const sectionsForCell = getSections(year, timeSlot, day, semester);
+        if (sectionsForCell.length === 0) {
+            return <TableCell className="h-20 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
+        }
         
         return (
-            <TableCell className="p-1 align-top h-20 border-r text-xs">
-                {sections.map(section => {
+            <TableCell className="p-1 align-top h-20 border-r text-xs" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
+                {sectionsForCell.map(section => {
                     const course = getCourseForSection(section);
                     const assignedClassroomName = section.asignacion?.aula_id ? classroomMap.get(section.asignacion.aula_id) : null;
 
                     return (
                         <div key={section._id} className="bg-muted p-1 rounded-sm h-full flex flex-col justify-center text-center">
                            <p className="font-bold text-[10px] leading-tight">{course?.name}</p>
+                           <p className="text-muted-foreground text-[9px]">{section.nombre_comision}</p>
                            {assignedClassroomName ? (
                              <Button 
                                 variant="link" 
                                 className="text-muted-foreground underline-offset-2 hover:no-underline h-auto p-0 text-[9px]"
-                                onClick={() => handleOpenAssignModal(section)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
                             >
                                 {assignedClassroomName}
                             </Button>
@@ -200,12 +215,13 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                             <Button 
                                 variant="link" 
                                 className="text-destructive h-auto p-0 text-[9px] font-bold"
-                                onClick={() => handleOpenAssignModal(section)}
+                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
                             >
                                Asignar Aula
                             </Button>
                            )}
                            <p className="text-muted-foreground text-[9px] mt-1">{section.profesor}</p>
+                           <p className="text-muted-foreground text-[9px]">{section.inscriptos} inscriptos</p>
                         </div>
                     )
                 })}
@@ -289,8 +305,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                              <TableCell className="border-r text-center text-xs w-[80px]">{timeSlot}</TableCell>
                              {days.map(day => (
                                  <React.Fragment key={day}>
-                                     {renderCell(getSections(year, timeSlot, day, 1))}
-                                     {renderCell(getSections(year, timeSlot, day, 2))}
+                                     {renderCell(year, timeSlot, day, 1)}
+                                     {renderCell(year, timeSlot, day, 2)}
                                  </React.Fragment>
                              ))}
                          </TableRow>
@@ -302,6 +318,16 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
           </CardContent>
       </Card>
     </div>
+
+    {isUpsertComisionModalOpen && modalContext && (
+      <UpsertComisionModal
+        isOpen={isUpsertComisionModalOpen}
+        onClose={() => setIsUpsertComisionModalOpen(false)}
+        comision={selectedComision}
+        context={modalContext}
+        courses={courses}
+      />
+    )}
 
     <Dialog open={!!assigningSection} onOpenChange={() => setAssigningSection(null)}>
         <DialogContent className="sm:max-w-[625px]">
