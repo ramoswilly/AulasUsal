@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AltaEdificioModal } from "@/components/modals/sedes/AltaEdificioModal";
+import { EditarEdificioModal } from "@/components/modals/sedes/EditarEdificioModal";
+import { EliminarEdificioModal } from "@/components/modals/sedes/EliminarEdificioModal";
 
 export function getBuildingIcon(tipo: string) {
   switch (tipo) {
@@ -64,8 +66,8 @@ export default async function CampusDetailPage({
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Aulas</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead>Aulas</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
 
@@ -90,9 +92,16 @@ export default async function CampusDetailPage({
                     <Badge variant="default">{building.tipo}</Badge>
                   </TableCell>
 
-                  <TableCell className="text-right">{classroomCount}</TableCell>
+                  <TableCell>{classroomCount}</TableCell>
 
-                  <TableCell>
+                  <TableCell className="flex gap-2 justify-end">
+                    <EditarEdificioModal
+                      buildingId={building._id}
+                      campusId={sede._id}
+                      currentNombre={building.nombre}
+                      currentTipo={building.tipo}
+                    />
+
                     <Button asChild>
                       <Link
                         href={`/sedes/${sede._id}/buildings/${building._id}`}
@@ -101,6 +110,11 @@ export default async function CampusDetailPage({
                         <ChevronsRight className="h-4 w-4" />
                       </Link>
                     </Button>
+
+                    <EliminarEdificioModal
+                      buildingId={building._id}
+                      buildingNombre={building.nombre}
+                    />
                   </TableCell>
                 </TableRow>
               );

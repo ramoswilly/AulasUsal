@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface ISede extends Document {
   nombre: string;
@@ -10,4 +10,5 @@ const SedeSchema: Schema = new Schema({
   direccion: { type: String, required: false },
 });
 
-export default mongoose.models.Sede || mongoose.model<ISede>('Sede', SedeSchema);
+export default mongoose.models.Sede ||
+  mongoose.model<ISede>("Sede", SedeSchema);

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, PlusCircle } from "lucide-react";
+import { Building2, Pencil, PlusCircle } from "lucide-react";
 import { getSedes, getEdificios } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AltaSedeModal } from "@/components/modals/sedes/AltaSedeModal";
+import { EditarSedeModal } from "@/components/modals/sedes/EditarSedeModal";
+import { EliminarSedeModal } from "@/components/modals/sedes/EliminarSedeModal";
 
 export default async function CampusesPage() {
   const sedes = await getSedes();
@@ -32,31 +34,50 @@ export default async function CampusesPage() {
           const buildingCount = edificios.filter(
             (b) => b.sede_id === sede._id || b.sede_id?._id === sede._id
           ).length;
+
+          console.log(buildingCount);
+
           return (
             <Card key={sede._id}>
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <Building2 className="size-8 text-accent" />
-                  <div>
-                    <CardTitle className="font-headline">
-                      {sede.nombre}
-                    </CardTitle>
-                    <CardDescription>
-                      {buildingCount}{" "}
-                      {buildingCount === 1 ? "edificio" : "edificios"}
-                    </CardDescription>
+                  <div className="w-full flex justify-between items-center">
+                    <div>
+                      <CardTitle className="font-headline">
+                        {sede.nombre}
+                      </CardTitle>
+                      <CardDescription>
+                        Dirección: {sede.direccion}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <EliminarSedeModal
+                        sedeId={sede._id}
+                        sedeNombre={sede.nombre}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardHeader>
+
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Gestione los edificios y aulas de {sede.nombre}.
+                  Gestione los edificios asociados a esta sede. Actualmente hay{" "}
+                  <strong>{buildingCount}</strong> edificio
+                  {buildingCount != 1 ? "s" : ""} registrado
+                  {buildingCount != 1 ? "s" : ""}
                 </p>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
                 <Button asChild className="w-full" variant="outline">
-                  <Link href={`/sedes/${sede._id}`}>Ver Edificios</Link>
+                  <Link href={`/sedes/${sede._id}`}>Gestionar Edificios</Link>
                 </Button>
+                <EditarSedeModal
+                  sedeId={sede._id}
+                  nombreActual={sede.nombre}
+                  direccionActual={sede.direccion || ""}
+                />
               </CardFooter>
             </Card>
           );
