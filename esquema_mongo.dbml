@@ -1,0 +1,61 @@
+// Esquema de base de datos para MongoDB
+// Las 'Tablas' representan 'Colecciones' de documentos.
+
+// --- Colecciones de Ubicaciones ---
+
+Collection Sedes {
+  _id ObjectId [pk]
+  nombre String [unique, not null]
+  direccion String
+}
+
+Collection Edificios {
+  _id ObjectId [pk]
+  nombre String [not null]
+  tipo String // 'Centro Tecnologico', 'Veterinaria', etc.
+  sede_id ObjectId [ref: > Sedes._id, not null] // Referencia a la Sede
+}
+
+Collection Aulas {
+  _id ObjectId [pk]
+  nombre_o_numero String [not null]
+  capacidad Int [not null]
+  tipo_aula String // 'Laboratorio', 'Anfiteatro', etc.
+  edificio_id ObjectId [ref: > Edificios._id, not null] // Referencia al Edificio
+}
+
+// --- Colecciones Académicas ---
+
+Collection Materias {
+  _id ObjectId [pk]
+  nombre_materia String [unique, not null]
+  anio_carrera Int
+  cuatrimestre Int
+}
+
+Collection Comisiones {
+  _id ObjectId [pk]
+  nombre_comision String [not null]
+  inscriptos Int
+  profesor String
+
+  // --- Datos Incrustados (Embedded) ---
+  // El horario se incrusta directamente en la comisión
+  horario {
+    dia String // 'LUNES', 'MARTES', etc.
+    turno String // 'MAÑANA', 'TARDE', 'NOCHE'
+  }
+
+  // --- Referencias a otras colecciones ---
+
+  // La asignación de aula es una referencia.
+  // Se puede duplicar 'aula_nombre' aquí para optimizar lecturas.
+  asignacion {
+    aula_id ObjectId [ref: > Aulas._id]
+    fecha_asignacion Date
+  }
+
+  // Array de referencias para la relación Muchos-a-Muchos con Materias.
+  // Esto reemplaza la tabla de unión 'comisiones_materias'.
+  materia_ids ObjectId[] [ref: > Materias._id]
+}
