@@ -33,6 +33,7 @@ export type Course = {
   name: string;
   programId: string;
   year: number;
+  semester: number;
 };
 
 export type Section = {

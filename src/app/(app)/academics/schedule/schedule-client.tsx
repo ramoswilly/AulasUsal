@@ -33,12 +33,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast'
-import { Users, Projector, Bot, Loader2, Sparkles } from 'lucide-react'
+import { Users, Projector, Bot, Loader2, Sparkles, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
+import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
+import type { IComision } from '@/models/Comision'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-const timeSlots = ['18:30 a 20:00 hs.', '20:15 a 21:30 hs.'];
+const timeSlots = ['18:30 a 21:30 hs.'];
 
 export function ScheduleClient({ courses, programs, allSections, classrooms }: { courses: any[], programs: any[], allSections: any[], classrooms: any[] }) {
     const [selectedProgram, setSelectedProgram] = React.useState(programs[0]._id);
@@ -47,34 +50,56 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
     const [isAssigning, setIsAssigning] = React.useState(false)
     const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
+    const [isUpsertComisionModalOpen, setIsUpsertComisionModalOpen] = React.useState(false);
+    const [selectedComision, setSelectedComision] = React.useState<IComision | null>(null);
+    const [modalContext, setModalContext] = React.useState<{ day: string; semester: number; year: number; turn: string; selectedProgram: string; } | null>(null);
 
     const { toast } = useToast();
 
-    const programCourses = courses.filter(c => c.carrera_id._id === selectedProgram);
-    const years = [...new Set(programCourses.map(c => c.anio))].sort((a,b) => a - b);
+    const selectedProgramData = programs.find(p => p._id === selectedProgram);
+    const years = selectedProgramData ? Array.from({ length: selectedProgramData.anios }, (_, i) => i + 1) : [];
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
-    const getCourseForSection = (section: Section): Course | undefined => {
-        // This needs to be adapted based on the new data structure
-        // In the new model, a comision has an array of materia_ids
-        // Let's find the first materia for now.
-        const materia = courses.find(c => c._id === section.materia_ids[0]);
-        return materia ? { id: materia._id, name: materia.nombre, programId: materia.carrera_id._id, year: materia.anio } : undefined;
-    }
+    const getCourseForSection = (section: any): Course | undefined => {
+        if (!section.materia_ids || section.materia_ids.length === 0) {
+            return undefined;
+        }
+        const materia = section.materia_ids[0];
+        if (!materia) {
+            return undefined;
+        }
+        // When populated, carrera_id is an object.
+        const programId = materia.carrera_id?._id || materia.carrera_id;
+        return {
+            id: materia._id,
+            name: materia.nombre_materia,
+            programId: programId,
+            year: materia.anio_carrera,
+            semester: materia.cuatrimestre,
+        };
+    };
 
     const getSections = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForYear = sections.filter(s => {
             const course = getCourseForSection(s);
-            // semester is not in the new model, I will ignore it for now
-            return course?.year === year && s.horario.turno.includes(selectedTurn);
+            return course?.programId === selectedProgram && course?.year === year && course?.semester === semester && s.horario.turno.includes(selectedTurn);
         });
 
-        const startTime = timeSlot.split(' ')[0];
+        if (timeSlot === '18:30 a 21:30 hs.') {
+            return sectionsForYear.filter(s => s.horario.dia === day);
+        } else {
+            const startTime = timeSlot.split(' ')[0];
+            return sectionsForYear.filter(s => 
+                s.horario.dia === day &&
+                s.horario.turno.startsWith(startTime) // This might need adjustment
+            );
+        }
+    }
 
-        return sectionsForYear.filter(s => 
-            s.horario.dia === day &&
-            s.horario.turno.startsWith(startTime) // This might need adjustment
-        );
+    const handleOpenUpsertModal = (day: string, semester: number, year: number, comision: IComision | null) => {
+        setModalContext({ day, semester, year, turn: selectedTurn, selectedProgram });
+        setSelectedComision(comision);
+        setIsUpsertComisionModalOpen(true);
     }
 
     const getAvailableClassrooms = (sectionToAssign: Section | null): AvailableClassroom[] => {
@@ -174,36 +199,52 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const courseForModal = assigningSection ? getCourseForSection(assigningSection) : null;
     const availableClassroomsForModal = getAvailableClassrooms(assigningSection);
 
-    const renderCell = (sections: Section[]) => {
-        if (sections.length === 0) return <TableCell className="h-20 border-r"></TableCell>;
+    const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
+        const sectionsForCell = getSections(year, timeSlot, day, semester);
+        if (sectionsForCell.length === 0) {
+            return <TableCell className="h-24 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
+        }
         
         return (
-            <TableCell className="p-1 align-top h-20 border-r text-xs">
-                {sections.map(section => {
+            <TableCell className="p-1 align-top h-24 border-r text-xs" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
+                {sectionsForCell.map(section => {
                     const course = getCourseForSection(section);
                     const assignedClassroomName = section.asignacion?.aula_id ? classroomMap.get(section.asignacion.aula_id) : null;
 
                     return (
-                        <div key={section._id} className="bg-muted p-1 rounded-sm h-full flex flex-col justify-center text-center">
-                           <p className="font-bold text-[10px] leading-tight">{course?.name}</p>
-                           {assignedClassroomName ? (
-                             <Button 
-                                variant="link" 
-                                className="text-muted-foreground underline-offset-2 hover:no-underline h-auto p-0 text-[9px]"
-                                onClick={() => handleOpenAssignModal(section)}
-                            >
-                                {assignedClassroomName}
-                            </Button>
-                           ) : (
-                            <Button 
-                                variant="link" 
-                                className="text-destructive h-auto p-0 text-[9px] font-bold"
-                                onClick={() => handleOpenAssignModal(section)}
-                            >
-                               Asignar Aula
-                            </Button>
-                           )}
-                           <p className="text-muted-foreground text-[9px] mt-1">{section.profesor}</p>
+                        <div key={section._id} className="bg-card border rounded-lg p-2 h-full flex flex-col text-left shadow-sm">
+                            <div className="flex justify-between items-start">
+                                <Badge variant="secondary" className="text-[10px] h-6">{section.nombre_comision}</Badge>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                    <Users className="w-4 h-4 mr-1" />
+                                    <span>{section.inscriptos}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center text-sm text-muted-foreground my-auto">
+                                <User className="w-4 h-4 mr-1" />
+                                <span className="truncate">{section.profesor}</span>
+                            </div>
+
+                            <div className="flex justify-end mt-auto">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="w-8 h-8"
+                                                onClick={(e) => { e.stopPropagation(); handleOpenAssignModal(section); }}
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Asignar Aula</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                         </div>
                     )
                 })}
@@ -228,7 +269,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
             </SelectTrigger>
             <SelectContent>
                 {programs.map(program => (
-                    <SelectItem key={program._id} value={program._id}>{program.nombre}</SelectItem>
+                    <SelectItem key={program._id} value={program._id}>{program.nombre_carrera}</SelectItem>
                 ))}
             </SelectContent>
         </Select>
@@ -287,8 +328,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                              <TableCell className="border-r text-center text-xs w-[80px]">{timeSlot}</TableCell>
                              {days.map(day => (
                                  <React.Fragment key={day}>
-                                     {renderCell(getSections(year, timeSlot, day, 1))}
-                                     {renderCell(getSections(year, timeSlot, day, 2))}
+                                     {renderCell(year, timeSlot, day, 1)}
+                                     {renderCell(year, timeSlot, day, 2)}
                                  </React.Fragment>
                              ))}
                          </TableRow>
@@ -300,6 +341,16 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
           </CardContent>
       </Card>
     </div>
+
+    {isUpsertComisionModalOpen && modalContext && (
+      <UpsertComisionModal
+        isOpen={isUpsertComisionModalOpen}
+        onClose={() => setIsUpsertComisionModalOpen(false)}
+        comision={selectedComision}
+        context={modalContext}
+        courses={courses}
+      />
+    )}
 
     <Dialog open={!!assigningSection} onOpenChange={() => setAssigningSection(null)}>
         <DialogContent className="sm:max-w-[625px]">
