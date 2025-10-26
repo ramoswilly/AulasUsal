@@ -136,7 +136,7 @@ export async function getMaterias() {
   noStore();
   try {
     await connectToDB();
-    const materias = await Materia.find({});
+    const materias = await Materia.find({}).populate("carrera_id");
     return serialize(materias);
   } catch (error) {
     console.error("Database Error:", error);

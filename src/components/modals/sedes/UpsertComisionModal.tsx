@@ -52,10 +52,7 @@ export function UpsertComisionModal({
   const router = useRouter();
 
   const filteredCourses = courses.filter(
-    (c) =>
-      c.carrera_id._id === context.selectedProgram &&
-      c.anio_carrera === context.year &&
-      c.cuatrimestre === context.semester
+    (c) => c.carrera_id?._id === context.selectedProgram
   );
 
   const courseOptions = filteredCourses.map((c) => ({
@@ -93,6 +90,7 @@ export function UpsertComisionModal({
           turno: context.turn,
         },
         materia_ids: [materia_id],
+        anio_dictado: new Date().getFullYear(),
       });
 
       toast({
