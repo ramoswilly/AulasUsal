@@ -60,38 +60,20 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const years = selectedProgramData ? Array.from({ length: selectedProgramData.anios }, (_, i) => i + 1) : [];
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
-    const getCourseForSection = (section: any): Course | undefined => {
-        if (!section.materia_id) {
-            return undefined;
-        }
-        const course = courses.find(c => c._id === section.materia_id);
-        if (!course) {
-            return undefined;
-        }
-        return {
-            id: course._id,
-            name: course.nombre_materia,
-            programId: course.carrera_id,
-            year: course.anio_carrera,
-            semester: course.cuatrimestre,
-        };
-    };
-
     const getSections = (year: number, timeSlot: string, day: string, semester: number) => {
-        const sectionsForYear = sections.filter(s => {
-            const course = getCourseForSection(s);
-            return course?.programId === selectedProgram && course?.year === year && course?.semester === semester && s.horario.turno.includes(selectedTurn);
-        });
+        return sections.filter(s => {
+            if (s.horario.dia !== day || !s.horario.turno.includes(selectedTurn)) {
+                return false;
+            }
 
-        if (timeSlot === '18:30 a 21:30 hs.') {
-            return sectionsForYear.filter(s => s.horario.dia === day);
-        } else {
-            const startTime = timeSlot.split(' ')[0];
-            return sectionsForYear.filter(s => 
-                s.horario.dia === day &&
-                s.horario.turno.startsWith(startTime) // This might need adjustment
-            );
-        }
+            const hasMatchingCourse = s.materia_ids?.some(materia => {
+                if (!materia) return false;
+                const programId = materia.carrera_id?.toString();
+                return programId === selectedProgram && materia.anio_carrera === year && materia.cuatrimestre === semester;
+            });
+
+            return hasMatchingCourse;
+        });
     }
 
     const handleOpenUpsertModal = (day: string, semester: number, year: number, comision: IComision | null) => {
@@ -105,7 +87,6 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
       
         const available = classrooms
           .map(classroom => {
-            // Rule 1 & 3: Schedule Availability and Shared Capacity
             const conflictingSections = sections.filter(s => 
               s.asignacion?.aula_id === classroom._id &&
               s._id !== sectionToAssign._id &&
@@ -121,15 +102,14 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
           })
           .filter((c): c is AvailableClassroom => c !== null);
 
-          // Sort by hasCapacity (true first) and then by remaining capacity
           return available.sort((a, b) => {
             if (a.hasCapacity !== b.hasCapacity) {
                 return a.hasCapacity ? -1 : 1;
             }
-            if (a.hasCapacity) { // Only sort by proximity if they both have capacity
+            if (a.hasCapacity) {
               const aProximity = a.capacity - a.futureOccupancy;
               const bProximity = b.capacity - b.futureOccupancy;
-              return aProximity - bProximity; // Ascending order of remaining space
+              return aProximity - bProximity;
             }
             return 0;
           })
@@ -194,7 +174,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         }
     }
 
-    const courseForModal = assigningSection ? getCourseForSection(assigningSection) : null;
+    const courseForModal = assigningSection ? assigningSection.materia_ids?.[0] : null;
     const availableClassroomsForModal = getAvailableClassrooms(assigningSection);
 
     const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
@@ -206,7 +186,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         return (
             <TableCell className="p-1 align-top h-24 border-r text-xs" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
                 {sectionsForCell.map(section => {
-                    const course = getCourseForSection(section);
+                    const course = section.materia_ids?.[0];
                     const assignedClassroomName = section.asignacion?.aula_id ? classroomMap.get(section.asignacion.aula_id) : null;
 
                     return (
@@ -218,6 +198,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                                     <span>{section.inscriptos}</span>
                                 </div>
                             </div>
+
+                            <div className="font-medium text-sm truncate my-1">{course?.nombre_materia}</div>
                             
                             <div className="flex items-center text-sm text-muted-foreground my-auto">
                                 <User className="w-4 h-4 mr-1" />
@@ -355,7 +337,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
             <DialogHeader>
                 <DialogTitle>Asignar Aula</DialogTitle>
                 <DialogDescription>
-                    Seleccione un aula disponible para la comisión de <span className="font-semibold text-foreground">{courseForModal?.name}</span>.
+                    Seleccione un aula disponible para la comisión de <span className="font-semibold text-foreground">{courseForModal?.nombre_materia}</span>.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
