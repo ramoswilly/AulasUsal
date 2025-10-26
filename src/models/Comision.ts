@@ -13,7 +13,7 @@ export interface IComision extends Document {
     aula_id: mongoose.Types.ObjectId;
     fecha_asignacion: Date;
   };
-  materia_id: mongoose.Types.ObjectId; // Una materia
+  materia_ids: mongoose.Types.ObjectId[]; // Varias materias
   carrera_ids: mongoose.Types.ObjectId[]; // Varias carreras
   anio_por_carrera: {
     carrera_id: mongoose.Types.ObjectId;
@@ -34,7 +34,7 @@ const ComisionSchema: Schema = new Schema({
     aula_id: { type: Schema.Types.ObjectId, ref: "Aula" },
     fecha_asignacion: { type: Date },
   },
-  materia_id: { type: Schema.Types.ObjectId, ref: "Materia", required: true },
+  materia_ids: [{ type: Schema.Types.ObjectId, ref: "Materia", required: true }],
   carrera_ids: [{ type: Schema.Types.ObjectId, ref: "Carrera" }],
   anio_por_carrera: [
     {

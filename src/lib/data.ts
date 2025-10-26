@@ -150,7 +150,7 @@ export async function getComisiones() {
   try {
     await connectToDB();
     const comisiones = await Comision.find({})
-      .populate("materia_id")
+      .populate("materia_ids")
       .populate("carrera_ids")
       .populate("asignacion.aula_id");
     return serialize(comisiones);

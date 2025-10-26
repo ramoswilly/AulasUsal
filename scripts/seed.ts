@@ -62,9 +62,9 @@ const seedDatabase = async () => {
 
   console.log('Cargando Materias...');
   const materias = await Materia.insertMany([
-    { nombre_materia: 'Análisis Matemático I', codigo_materia: 'AMI', carrera_id: ingInformatica._id},
-    { nombre_materia: 'Introducción a la Programación', codigo_materia: 'IP', carrera_id: ingInformatica._id },
-    { nombre_materia: 'Sistemas de Bases de Datos', codigo_materia: 'SBD', carrera_id: ingInformatica._id },
+    { nombre_materia: 'Análisis Matemático I', codigo_materia: 'AMI', carrera_id: ingInformatica._id, anio_carrera: 1, cuatrimestre: 1},
+    { nombre_materia: 'Introducción a la Programación', codigo_materia: 'IP', carrera_id: ingInformatica._id, anio_carrera: 1, cuatrimestre: 1 },
+    { nombre_materia: 'Sistemas de Bases de Datos', codigo_materia: 'SBD', carrera_id: ingInformatica._id, anio_carrera: 2, cuatrimestre: 2 },
   ]);
   const am1 = materias.find(m => m.nombre_materia === 'Análisis Matemático I');
 
@@ -80,7 +80,7 @@ const seedDatabase = async () => {
         aula_id: aula101._id,
         fecha_asignacion: new Date(),
       },
-      materia_id: am1._id,
+      materia_ids: [am1._id],
       carrera_ids: [ingInformatica._id],
       anio_por_carrera: [{
         carrera_id: ingInformatica._id,
