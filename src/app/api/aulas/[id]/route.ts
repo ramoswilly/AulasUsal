@@ -10,18 +10,17 @@ export async function PATCH(
     await connectToDB();
     const { id } = params;
     const body = await req.json();
-    const { nombre_o_numero, tipo_aula, capacidad } = body;
+    const { nombre_o_numero, tipo_aula, capacidad, recursos } = body;
 
-    if (!nombre_o_numero) {
+    if (!nombre_o_numero)
       return NextResponse.json(
         { error: "El nombre es obligatorio" },
         { status: 400 }
       );
-    }
 
     const aula = await Aula.findByIdAndUpdate(
       id,
-      { nombre_o_numero, tipo_aula, capacidad },
+      { nombre_o_numero, tipo_aula, capacidad, recursos: recursos || [] },
       { new: true }
     );
 

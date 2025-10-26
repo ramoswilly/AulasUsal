@@ -12,5 +12,13 @@ export const ClassroomTypes = [
   "Otro",
 ] as const;
 
+export const AulaRecursos = [
+  "Pizarron",
+  "Proyector",
+  "Television",
+  "Otro",
+] as const;
+
 export type ClassroomType = (typeof ClassroomTypes)[number];
 export type BuildingType = (typeof BuildingTypes)[number];
+export type AulaRecurso = (typeof AulaRecursos)[number];

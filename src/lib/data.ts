@@ -23,7 +23,7 @@ export async function getSedes() {
   noStore();
   try {
     await connectToDB();
-    const sedes = await Sede.find({ deletedAt: null });
+    const sedes = await Sede.find({});
     return serialize(sedes);
   } catch (error) {
     console.error("Database Error:", error);
@@ -35,7 +35,7 @@ export async function getSedeById(id) {
   noStore();
   try {
     await connectToDB();
-    const sede = await Sede.findOne({ _id: id, deletedAt: null });
+    const sede = await Sede.findOne({ _id: id });
     return serialize(sede);
   } catch (error) {
     console.error("Database Error:", error);
@@ -48,9 +48,8 @@ export async function getEdificios() {
   noStore();
   try {
     await connectToDB();
-    const edificios = await Edificio.find({ deletedAt: null }).populate({
+    const edificios = await Edificio.find({}).populate({
       path: "sede_id",
-      match: { deletedAt: null },
     });
     return serialize(edificios);
   } catch (error) {
@@ -65,10 +64,8 @@ export async function getEdificioById(id) {
     await connectToDB();
     const edificio = await Edificio.findOne({
       _id: id,
-      deletedAt: null,
     }).populate({
       path: "sede_id",
-      match: { deletedAt: null },
     });
     return serialize(edificio);
   } catch (error) {
@@ -81,7 +78,7 @@ export async function getEdificiosBySede(sedeId) {
   noStore();
   try {
     await connectToDB();
-    const edificios = await Edificio.find({ sede_id: sedeId, deletedAt: null });
+    const edificios = await Edificio.find({ sede_id: sedeId });
     return serialize(edificios);
   } catch (error) {
     console.error("Database Error:", error);
@@ -94,12 +91,12 @@ export async function getAulas() {
   noStore();
   try {
     await connectToDB();
-    const aulas = await Aula.find({ deletedAt: null }).populate({
+    const aulas = await Aula.find({}).populate({
       path: "edificio_id",
-      match: { deletedAt: null },
+      match: {},
       populate: {
         path: "sede_id",
-        match: { deletedAt: null },
+        match: {},
       },
     });
     return serialize(aulas);
@@ -113,7 +110,7 @@ export async function getAulasByEdificio(edificioId) {
   noStore();
   try {
     await connectToDB();
-    const aulas = await Aula.find({ edificio_id: edificioId, deletedAt: null });
+    const aulas = await Aula.find({ edificio_id: edificioId });
     return serialize(aulas);
   } catch (error) {
     console.error("Database Error:", error);
@@ -139,7 +136,7 @@ export async function getMaterias() {
   noStore();
   try {
     await connectToDB();
-    const materias = await Materia.find({}).populate("carrera_id");
+    const materias = await Materia.find({});
     return serialize(materias);
   } catch (error) {
     console.error("Database Error:", error);
@@ -153,7 +150,8 @@ export async function getComisiones() {
   try {
     await connectToDB();
     const comisiones = await Comision.find({})
-      .populate("materia_ids")
+      .populate("materia_id")
+      .populate("carrera_ids")
       .populate("asignacion.aula_id");
     return serialize(comisiones);
   } catch (error) {
@@ -161,9 +159,3 @@ export async function getComisiones() {
     throw new Error("Failed to fetch comisiones.");
   }
 }
-
-/*
-NOTE: The original file also had 'resources' and 'programs'.
-'programs' has now been implemented as 'Carreras'.
-'resources' are still not in the schema.
-*/
