@@ -10,6 +10,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
+import { AulaRecursos, ClassroomTypes } from "@/lib/Tipos/tipos";
 import {
   Select,
   SelectContent,
@@ -17,16 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { BuildingTypes } from "@/lib/Tipos/tipos";
-import { Pencil } from "lucide-react";
 
 interface EditAulaProps {
   aulaId: string;
   currentNombre: string;
   currentTipo: string;
   currentCapacidad: number;
+  currentRecursos?: string[];
 }
 
 export function EditarAulaModal({
@@ -34,11 +35,13 @@ export function EditarAulaModal({
   currentNombre,
   currentTipo,
   currentCapacidad,
+  currentRecursos = [],
 }: EditAulaProps) {
   const [open, setOpen] = React.useState(false);
   const [nombre, setNombre] = React.useState(currentNombre);
   const [tipo, setTipo] = React.useState(currentTipo);
   const [capacidad, setCapacidad] = React.useState(currentCapacidad);
+  const [recursos, setRecursos] = React.useState<string[]>(currentRecursos);
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -56,7 +59,12 @@ export function EditarAulaModal({
 
     setLoading(true);
     try {
-      const payload = { nombre_o_numero: nombre, tipo_aula: tipo, capacidad };
+      const payload = {
+        nombre_o_numero: nombre,
+        tipo_aula: tipo,
+        capacidad,
+        recursos,
+      };
       const res = await fetch(`/api/aulas/${aulaId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -108,15 +116,15 @@ export function EditarAulaModal({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">Tipo *</label>
-              <Select onValueChange={setTipo} value={tipo}>
+              <label className="text-sm font-medium">Tipo de aula</label>
+              <Select value={tipo} onValueChange={setTipo}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccione tipo" />
+                  <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BuildingTypes.map((bt) => (
-                    <SelectItem key={bt} value={bt}>
-                      {bt}
+                  {ClassroomTypes.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -133,19 +141,61 @@ export function EditarAulaModal({
               />
             </div>
 
-            <DialogFooter className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Guardando..." : "Guardar"}
-              </Button>
-            </DialogFooter>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Recursos</label>
+              <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input">
+                {AulaRecursos.map((r) => (
+                  <label
+                    key={r}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      className="peer hidden"
+                      value={r}
+                      checked={recursos.includes(r)}
+                      onChange={(e) => {
+                        if (e.target.checked) setRecursos([...recursos, r]);
+                        else setRecursos(recursos.filter((res) => res !== r));
+                      }}
+                    />
+                    <span
+                      className="w-5 h-5 rounded border border-input bg-background
+                                     flex-shrink-0 flex items-center justify-center
+                                     peer-checked:bg-primary peer-checked:border-primary
+                                     transition-colors"
+                    >
+                      <svg
+                        className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+                    <span>{r}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </form>
+
+          <DialogFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading} onClick={handleSubmit}>
+              {loading ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

@@ -81,6 +81,7 @@ export default async function BuildingDetailPage({
                     currentNombre={classroom.nombre_o_numero}
                     currentTipo={classroom.tipo_aula}
                     currentCapacidad={classroom.capacidad}
+                    currentRecursos={classroom.recursos}
                   />
                   <EliminarAulaModal
                     aulaId={classroom._id}
