@@ -61,21 +61,19 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
     const getCourseForSection = (section: any): Course | undefined => {
-        if (!section.materia_ids || section.materia_ids.length === 0) {
+        if (!section.materia_id) {
             return undefined;
         }
-        const materia = section.materia_ids[0];
-        if (!materia) {
+        const course = courses.find(c => c._id === section.materia_id);
+        if (!course) {
             return undefined;
         }
-        // When populated, carrera_id is an object.
-        const programId = materia.carrera_id?._id || materia.carrera_id;
         return {
-            id: materia._id,
-            name: materia.nombre_materia,
-            programId: programId,
-            year: materia.anio_carrera,
-            semester: materia.cuatrimestre,
+            id: course._id,
+            name: course.nombre_materia,
+            programId: course.carrera_id,
+            year: course.anio_carrera,
+            semester: course.cuatrimestre,
         };
     };
 

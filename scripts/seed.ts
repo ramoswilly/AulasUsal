@@ -42,7 +42,7 @@ const seedDatabase = async () => {
 
   console.log('Cargando Edificios...');
   const edificios = await Edificio.insertMany([
-    { nombre: 'Centro Tecnológico', tipo: 'Tecnológico', sede_id: sedeCentro._id },
+    { nombre: 'Centro Tecnológico', tipo: 'Centro Tecnológico', sede_id: sedeCentro._id },
   ]);
   const ct = edificios[0];
 
@@ -55,16 +55,16 @@ const seedDatabase = async () => {
 
   console.log('Cargando Carreras...');
   const carreras = await Carrera.insertMany([
-      { nombre_carrera: 'Ingeniería en Informática' },
-      { nombre_carrera: 'Licenciatura en Psicología' },
+      { nombre_carrera: 'Ingeniería en Informática', codigo_carrera: 'IINF', anios: 5 },
+      { nombre_carrera: 'Licenciatura en Psicología', codigo_carrera: 'LPSI', anios: 5 },
   ]);
   const ingInformatica = carreras.find(c => c.nombre_carrera === 'Ingeniería en Informática');
 
   console.log('Cargando Materias...');
   const materias = await Materia.insertMany([
-    { nombre_materia: 'Análisis Matemático I', anio_carrera: 1, cuatrimestre: 1, carrera_id: ingInformatica._id },
-    { nombre_materia: 'Introducción a la Programación', anio_carrera: 1, cuatrimestre: 1, carrera_id: ingInformatica._id },
-    { nombre_materia: 'Sistemas de Bases de Datos', anio_carrera: 3, cuatrimestre: 1, carrera_id: ingInformatica._id },
+    { nombre_materia: 'Análisis Matemático I', codigo_materia: 'AMI', carrera_id: ingInformatica._id},
+    { nombre_materia: 'Introducción a la Programación', codigo_materia: 'IP', carrera_id: ingInformatica._id },
+    { nombre_materia: 'Sistemas de Bases de Datos', codigo_materia: 'SBD', carrera_id: ingInformatica._id },
   ]);
   const am1 = materias.find(m => m.nombre_materia === 'Análisis Matemático I');
 
@@ -72,6 +72,7 @@ const seedDatabase = async () => {
   await Comision.insertMany([
     {
       nombre_comision: '1º-NOCHE',
+      anio_dictado: 2024,
       inscriptos: 30,
       profesor: 'Maciel Abel',
       horario: { dia: 'Lunes', turno: 'NOCHE' },
@@ -79,7 +80,12 @@ const seedDatabase = async () => {
         aula_id: aula101._id,
         fecha_asignacion: new Date(),
       },
-      materia_ids: [am1._id],
+      materia_id: am1._id,
+      carrera_ids: [ingInformatica._id],
+      anio_por_carrera: [{
+        carrera_id: ingInformatica._id,
+        anio: 1
+      }]
     },
   ]);
 
