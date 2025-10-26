@@ -137,7 +137,7 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
 export async function upsertComision(data: any) {
   await connectToDB();
 
-  const { _id, nombre_comision, profesor, inscriptos, horario, materia_ids } = data;
+  const { _id, nombre_comision, profesor, inscriptos, horario, materia_ids, anio_dictado } = data;
 
   if (_id) {
     // Update existing comision
@@ -145,7 +145,9 @@ export async function upsertComision(data: any) {
       nombre_comision,
       profesor,
       inscriptos,
+      horario,
       materia_ids,
+      anio_dictado,
     });
   } else {
     // Create new comision
@@ -155,6 +157,7 @@ export async function upsertComision(data: any) {
       inscriptos,
       horario,
       materia_ids,
+      anio_dictado,
     });
   }
 }
