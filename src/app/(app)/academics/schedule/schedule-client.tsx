@@ -35,7 +35,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Users, Projector, Bot, Loader2, Sparkles, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
+import { runAutoAssignment, type AssignmentResult, updateComisionAsignacion } from '@/lib/actions'
 // import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
 // import type { IComision } from '@/models/Comision'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -141,7 +141,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         const available = classrooms
           .map(classroom => {
             const conflictingSections = sections.filter(s => 
-              s.asignacion?.aula_id === classroom._id &&
+              s.asignacion?.aula_id?._id === classroom._id &&
               s._id !== sectionToAssign._id &&
               s.horario.dia === sectionToAssign.horario.dia &&
               s.horario.turno === sectionToAssign.horario.turno
@@ -160,8 +160,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                 return a.hasCapacity ? -1 : 1;
             }
             if (a.hasCapacity) {
-              const aProximity = a.capacity - a.futureOccupancy;
-              const bProximity = b.capacity - b.futureOccupancy;
+              const aProximity = a.capacidad - a.futureOccupancy;
+              const bProximity = b.capacidad - b.futureOccupancy;
               return aProximity - bProximity;
             }
             return 0;
@@ -172,17 +172,32 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         setAssigningSection(section);
     }
     
-    const handleAssignClassroom = (sectionId: string, classroomId: string) => {
-        setSections(prevSections => 
-            prevSections.map(s => 
-                s._id === sectionId ? { ...s, asignacion: { ...s.asignacion, aula_id: classroomId } } : s
-            )
+    const handleAssignClassroom = async (sectionId: string, classroomId: string) => {
+        const originalSections = sections;
+        const classroomToAssign = classrooms.find(c => c._id === classroomId);
+
+        const newSections = sections.map(s => 
+            s._id === sectionId 
+                ? { ...s, asignacion: { ...s.asignacion, aula_id: classroomToAssign } } 
+                : s
         );
+        setSections(newSections);
         setAssigningSection(null);
-        toast({
-            title: "Aula Asignada",
-            description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
-        })
+
+        try {
+            await updateComisionAsignacion(sectionId, classroomId);
+            toast({
+                title: "Aula Asignada",
+                description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
+            })
+        } catch (error) {
+            setSections(originalSections);
+            toast({
+                title: "Error al asignar aula",
+                description: "No se pudo guardar la asignación. Por favor, intente de nuevo.",
+                variant: "destructive",
+            })
+        }
     }
 
     const handleAutoAssign = async () => {
@@ -245,7 +260,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                 // onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}
             >
                 {sectionsForCell.map(section => {
-                    const classroom = classrooms.find(c => c._id === section.asignacion?.aula_id);
+                    const classroom = section.asignacion?.aula_id;
                     return (
                         <SectionCard 
                             key={section._id} 
@@ -386,7 +401,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Aula</TableHead>
-                                <TableHead>Ocupación Futura</TableHead>
+                                <TableHead>Ocupación</TableHead>
+                                <TableHead>Recursos</TableHead>
                                 <TableHead className="w-[100px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -398,7 +414,10 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                                         "font-medium",
                                         classroom.hasCapacity ? "text-green-600" : "text-red-600"
                                     )}>
-                                        {classroom.futureOccupancy}/{classroom.capacity}
+                                        {classroom.futureOccupancy}/{classroom.capacidad}
+                                    </TableCell>
+                                    <TableCell>
+                                        {classroom.recursos?.join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         <Button 
@@ -413,7 +432,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                             ))}
                             {availableClassroomsForModal.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
                                         No hay aulas disponibles que cumplan los requisitos.
                                     </TableCell>
                                 </TableRow>

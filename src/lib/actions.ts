@@ -161,3 +161,11 @@ export async function upsertComision(data: any) {
     });
   }
 }
+
+export async function updateComisionAsignacion(comisionId: string, aulaId: string) {
+  await connectToDB();
+  await Comision.findByIdAndUpdate(comisionId, {
+    'asignacion.aula_id': aulaId,
+    'asignacion.fecha_asignacion': new Date()
+  });
+}
