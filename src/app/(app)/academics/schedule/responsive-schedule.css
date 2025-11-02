@@ -1,0 +1,21 @@
+/*
+  Responsive table styles
+*/
+
+@media screen and (max-width: 1280px) {
+  .responsive-schedule {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+  }
+
+  .responsive-schedule .schedule-table {
+    width: 100%; /* Ensure table takes full width of its container */
+    min-width: 1000px; /* Set a minimum width for the table to prevent excessive collapsing */
+  }
+
+  .responsive-schedule .schedule-table th,
+  .responsive-schedule .schedule-table td {
+    white-space: nowrap; /* Prevent text wrapping in cells */
+    min-width: 120px; /* Ensure cells have a minimum width */
+  }
+}

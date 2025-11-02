@@ -39,6 +39,7 @@ import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
 import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
 import type { IComision } from '@/models/Comision'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import './responsive-schedule.css'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 21:30 hs.'];
@@ -223,11 +224,17 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForCell = getSections(year, timeSlot, day, semester);
         if (sectionsForCell.length === 0) {
-            return <TableCell className="h-28 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
+            return <TableCell 
+                className="h-28 border-r" 
+                onClick={() => handleOpenUpsertModal(day, semester, year, null)}
+            ></TableCell>;
         }
         
         return (
-            <TableCell className="p-1 align-top h-28 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
+            <TableCell 
+                className="p-1 align-top h-28 border-r" 
+                onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}
+            >
                 {sectionsForCell.map(section => (
                     <SectionCard 
                         key={section._id} 
@@ -280,53 +287,60 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
           </Button>
       </div>
       
-      <Card>
-          <CardContent className="p-0 overflow-x-auto">
-          <Table className="border-collapse border">
-            <TableHeader>
-                <TableRow>
-                    <TableHead className="min-w-[50px] border-r text-center font-bold">AÑO</TableHead>
-                    <TableHead className="min-w-[80px] border-r text-center font-bold">COMISIÓN</TableHead>
-                    {days.map(day => (
-                        <TableHead key={day} colSpan={2} className="text-center border-r font-bold min-w-[240px]">{day.toUpperCase()}</TableHead>
+      <div className="responsive-schedule">
+        <Table className="border-collapse border schedule-table">
+          <TableHeader>
+              <TableRow>
+                  <TableHead className="min-w-[50px] border-r text-center font-bold">AÑO</TableHead>
+                  <TableHead className="min-w-[80px] border-r text-center font-bold">COMISIÓN</TableHead>
+                  {days.map(day => (
+                      <TableHead key={day} colSpan={2} className="text-center border-r font-bold min-w-[240px]">{day.toUpperCase()}</TableHead>
+                  ))}
+              </TableRow>
+              <TableRow>
+                  <TableHead className="border-r"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  {days.map(day => (
+                      <React.Fragment key={day}>
+                          <TableHead className="text-center border-r font-normal min-w-[120px]">Primer Cuatrimestre</TableHead>
+                          <TableHead className="text-center border-r font-normal min-w-[120px]">Segundo Cuatrimestre</TableHead>
+                      </React.Fragment>
+                  ))}
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {years.map(year => (
+                  <React.Fragment key={year}>
+                    {timeSlots.map((timeSlot, timeIndex) => (
+                        <TableRow key={`${year}-${timeIndex}`}>
+                          {timeIndex === 0 && (
+                              <TableCell 
+                                  data-label="AÑO"
+                                  rowSpan={timeSlots.length} 
+                                  className="border-r align-middle text-center font-bold min-w-[50px]"
+                              >
+                                  {year}º
+                              </TableCell>
+                          )}
+                            <TableCell 
+                              data-label="COMISIÓN"
+                              className="border-r text-center text-xs min-w-[80px]"
+                            >
+                              {timeSlot}
+                            </TableCell>
+                            {days.map(day => (
+                                <React.Fragment key={day}>
+                                    {renderCell(year, timeSlot, day, 1)}
+                                    {renderCell(year, timeSlot, day, 2)}
+                                </React.Fragment>
+                            ))}
+                        </TableRow>
                     ))}
-                </TableRow>
-                <TableRow>
-                    <TableHead className="border-r"></TableHead>
-                    <TableHead className="border-r"></TableHead>
-                    {days.map(day => (
-                        <React.Fragment key={day}>
-                            <TableHead className="text-center border-r font-normal min-w-[120px]">Primer Cuatrimestre</TableHead>
-                            <TableHead className="text-center border-r font-normal min-w-[120px]">Segundo Cuatrimestre</TableHead>
-                        </React.Fragment>
-                    ))}
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {years.map(year => (
-                   <React.Fragment key={year}>
-                     {timeSlots.map((timeSlot, timeIndex) => (
-                         <TableRow key={`${year}-${timeIndex}`}>
-                            {timeIndex === 0 && (
-                                <TableCell rowSpan={timeSlots.length} className="border-r align-middle text-center font-bold min-w-[50px]">
-                                    {year}º
-                                </TableCell>
-                            )}
-                             <TableCell className="border-r text-center text-xs min-w-[80px]">{timeSlot}</TableCell>
-                             {days.map(day => (
-                                 <React.Fragment key={day}>
-                                     {renderCell(year, timeSlot, day, 1)}
-                                     {renderCell(year, timeSlot, day, 2)}
-                                 </React.Fragment>
-                             ))}
-                         </TableRow>
-                     ))}
-                   </React.Fragment>
-                ))}
-            </TableBody>
-            </Table>
-          </CardContent>
-      </Card>
+                  </React.Fragment>
+              ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
 
     {isUpsertComisionModalOpen && modalContext && (
