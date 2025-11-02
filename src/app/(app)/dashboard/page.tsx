@@ -65,7 +65,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <PageHeader title="Bienvenido a AulaSync" breadcrumbs={[{ href: '/dashboard', label: 'Home' }]} />
+      <PageHeader title="Bienvenido a Aulas USAL" breadcrumbs={[{ href: '/dashboard', label: 'Home' }]} />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {stats.map((stat) => (
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
               Añada, edite o elimine sedes, edificios y aulas para mantener su información actualizada.
             </p>
             <Button asChild variant="secondary">
-              <Link href="/campuses">
+              <Link href="/sedes">
                 Gestionar Infraestructura <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
