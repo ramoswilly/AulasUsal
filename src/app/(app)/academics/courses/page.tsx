@@ -1,4 +1,4 @@
-import { getCarreras, getComisiones, getMaterias } from "@/lib/data";
+import { getCarreras, getComisiones, getMaterias, getSedes } from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,11 +21,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { log } from "console";
+import { AltaCarreraModal } from "@/components/modals/academico/AltaCarrerra";
 
 export default async function AcademicsPage() {
   const carreras = await getCarreras();
   const materias = await getMaterias();
   const comisiones = await getComisiones();
+  const sedes = await getSedes();
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -36,9 +38,10 @@ export default async function AcademicsPage() {
           { href: "/academics/courses", label: "Académico" },
         ]}
       />
+
       <Tabs defaultValue="carreras">
         <div className="flex flex-col justify-between">
-          <div>
+          <div className="flex justify-between">
             <TabsList>
               <TabsTrigger value="carreras">
                 <GraduationCap className="mr-2" />
@@ -53,6 +56,8 @@ export default async function AcademicsPage() {
                 Comisiones
               </TabsTrigger>
             </TabsList>
+
+            <AltaCarreraModal sedes={sedes} />
           </div>
           <TabsContent value="carreras">
             <TablaCarreras carreras={carreras} />
