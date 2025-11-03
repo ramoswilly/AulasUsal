@@ -35,33 +35,43 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Users, Projector, Bot, Loader2, Sparkles, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { runAutoAssignment, type AssignmentResult } from '@/lib/actions'
-import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
-import type { IComision } from '@/models/Comision'
+import { runAutoAssignment, type AssignmentResult, updateComisionAsignacion } from '@/lib/actions'
+// import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
+// import type { IComision } from '@/models/Comision'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import './responsive-schedule.css'
 
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 21:30 hs.'];
 
-function SectionCard({ section, onAssignClick }: { section: any, onAssignClick: (section: any) => void }) {
+function SectionCard({ section, onAssignClick, classroom }: { section: Section, onAssignClick: (section: Section) => void, classroom: any | null }) {
     const course = section.materia_ids?.[0];
+    const capacity = classroom ? classroom.capacidad : null;
 
     return (
-        <div className="bg-card border rounded-lg p-1.5 h-full flex flex-col text-left shadow-sm text-xs relative">
+        <div className="bg-card border rounded-lg p-2 h-full flex flex-col text-left shadow-sm text-xs relative pb-7">
             <div className="flex justify-between items-start mb-1">
                 <Badge variant="secondary" className="text-[10px] h-5 leading-tight px-1.5">{section.nombre_comision}</Badge>
                 <div className="flex items-center text-muted-foreground">
                     <Users className="w-3 h-3 mr-1" />
-                    <span>{section.inscriptos}</span>
+                    <span>{section.inscriptos}{capacity ? `/${capacity}` : ''}</span>
                 </div>
             </div>
 
             <p className="font-semibold leading-snug flex-grow my-1">{course?.nombre_materia}</p>
             
-            <div className="flex items-center text-muted-foreground mt-auto">
-                <User className="w-3 h-3 mr-1" />
-                <span className="truncate">{section.profesor}</span>
+            <div className="absolute bottom-1 left-2 right-2">
+                <div className="flex items-center text-muted-foreground mt-1">
+                    <User className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate pr-6">{section.profesor}</span>
+                </div>
+
+                <div className="flex items-center text-muted-foreground text-xs mt-0.5">
+                    <Projector className="w-3 h-3 mr-1" />
+                    <span>{classroom ? classroom.nombre_o_numero : 'Sin asignar'}</span>
+                </div>
             </div>
+
 
             <div className="absolute bottom-0 right-0">
                 <TooltipProvider>
@@ -93,9 +103,9 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
     const [isAssigning, setIsAssigning] = React.useState(false)
     const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
-    const [isUpsertComisionModalOpen, setIsUpsertComisionModalOpen] = React.useState(false);
-    const [selectedComision, setSelectedComision] = React.useState<IComision | null>(null);
-    const [modalContext, setModalContext] = React.useState<{ day: string; semester: number; year: number; turn: string; selectedProgram: string; } | null>(null);
+    // const [isUpsertComisionModalOpen, setIsUpsertComisionModalOpen] = React.useState(false);
+    // const [selectedComision, setSelectedComision] = React.useState<IComision | null>(null);
+    // const [modalContext, setModalContext] = React.useState<{ day: string; semester: number; year: number; turn: string; selectedProgram: string; } | null>(null);
 
     const { toast } = useToast();
 
@@ -119,11 +129,11 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         });
     }
 
-    const handleOpenUpsertModal = (day: string, semester: number, year: number, comision: IComision | null) => {
+    /* const handleOpenUpsertModal = (day: string, semester: number, year: number, comision: IComision | null) => {
         setModalContext({ day, semester, year, turn: selectedTurn, selectedProgram });
         setSelectedComision(comision);
         setIsUpsertComisionModalOpen(true);
-    }
+    } */
 
     const getAvailableClassrooms = (sectionToAssign: Section | null): AvailableClassroom[] => {
         if (!sectionToAssign) return [];
@@ -131,7 +141,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         const available = classrooms
           .map(classroom => {
             const conflictingSections = sections.filter(s => 
-              s.asignacion?.aula_id === classroom._id &&
+              s.asignacion?.aula_id?._id === classroom._id &&
               s._id !== sectionToAssign._id &&
               s.horario.dia === sectionToAssign.horario.dia &&
               s.horario.turno === sectionToAssign.horario.turno
@@ -150,8 +160,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                 return a.hasCapacity ? -1 : 1;
             }
             if (a.hasCapacity) {
-              const aProximity = a.capacity - a.futureOccupancy;
-              const bProximity = b.capacity - b.futureOccupancy;
+              const aProximity = a.capacidad - a.futureOccupancy;
+              const bProximity = b.capacidad - b.futureOccupancy;
               return aProximity - bProximity;
             }
             return 0;
@@ -162,17 +172,32 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         setAssigningSection(section);
     }
     
-    const handleAssignClassroom = (sectionId: string, classroomId: string) => {
-        setSections(prevSections => 
-            prevSections.map(s => 
-                s._id === sectionId ? { ...s, asignacion: { ...s.asignacion, aula_id: classroomId } } : s
-            )
+    const handleAssignClassroom = async (sectionId: string, classroomId: string) => {
+        const originalSections = sections;
+        const classroomToAssign = classrooms.find(c => c._id === classroomId);
+
+        const newSections = sections.map(s => 
+            s._id === sectionId 
+                ? { ...s, asignacion: { ...s.asignacion, aula_id: classroomToAssign } } 
+                : s
         );
+        setSections(newSections);
         setAssigningSection(null);
-        toast({
-            title: "Aula Asignada",
-            description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
-        })
+
+        try {
+            await updateComisionAsignacion(sectionId, classroomId);
+            toast({
+                title: "Aula Asignada",
+                description: `El aula ${classroomMap.get(classroomId)} ha sido asignada a la comisión.`,
+            })
+        } catch (error) {
+            setSections(originalSections);
+            toast({
+                title: "Error al asignar aula",
+                description: "No se pudo guardar la asignación. Por favor, intente de nuevo.",
+                variant: "destructive",
+            })
+        }
     }
 
     const handleAutoAssign = async () => {
@@ -223,18 +248,28 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
         const sectionsForCell = getSections(year, timeSlot, day, semester);
         if (sectionsForCell.length === 0) {
-            return <TableCell className="h-28 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, null)}></TableCell>;
+            return <TableCell 
+                className="h-28 border-r" 
+                // onClick={() => handleOpenUpsertModal(day, semester, year, null)}
+            ></TableCell>;
         }
         
         return (
-            <TableCell className="p-1 align-top h-28 border-r" onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}>
-                {sectionsForCell.map(section => (
-                    <SectionCard 
-                        key={section._id} 
-                        section={section} 
-                        onAssignClick={handleOpenAssignModal} 
-                    />
-                ))}
+            <TableCell 
+                className="p-1 align-top h-28 border-r" 
+                // onClick={() => handleOpenUpsertModal(day, semester, year, sectionsForCell[0])}
+            >
+                {sectionsForCell.map(section => {
+                    const classroom = section.asignacion?.aula_id;
+                    return (
+                        <SectionCard 
+                            key={section._id} 
+                            section={section} 
+                            onAssignClick={handleOpenAssignModal}
+                            classroom={classroom}
+                        />
+                    )
+                })}
             </TableCell>
         )
     }
@@ -280,56 +315,63 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
           </Button>
       </div>
       
-      <Card>
-          <CardContent className="p-0 overflow-x-auto">
-          <Table className="border-collapse border">
-            <TableHeader>
-                <TableRow>
-                    <TableHead className="min-w-[50px] border-r text-center font-bold">AÑO</TableHead>
-                    <TableHead className="min-w-[80px] border-r text-center font-bold">COMISIÓN</TableHead>
-                    {days.map(day => (
-                        <TableHead key={day} colSpan={2} className="text-center border-r font-bold min-w-[240px]">{day.toUpperCase()}</TableHead>
+      <div className="responsive-schedule">
+        <Table className="border-collapse border schedule-table">
+          <TableHeader>
+              <TableRow>
+                  <TableHead className="min-w-[50px] border-r text-center font-bold">AÑO</TableHead>
+                  <TableHead className="min-w-[80px] border-r text-center font-bold">COMISIÓN</TableHead>
+                  {days.map(day => (
+                      <TableHead key={day} colSpan={2} className="text-center border-r font-bold min-w-[240px]">{day.toUpperCase()}</TableHead>
+                  ))}
+              </TableRow>
+              <TableRow>
+                  <TableHead className="border-r"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  {days.map(day => (
+                      <React.Fragment key={day}>
+                          <TableHead className="text-center border-r font-normal min-w-[120px]">Primer Cuatrimestre</TableHead>
+                          <TableHead className="text-center border-r font-normal min-w-[120px]">Segundo Cuatrimestre</TableHead>
+                      </React.Fragment>
+                  ))}
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {years.map(year => (
+                  <React.Fragment key={year}>
+                    {timeSlots.map((timeSlot, timeIndex) => (
+                        <TableRow key={`${year}-${timeIndex}`}>
+                          {timeIndex === 0 && (
+                              <TableCell 
+                                  data-label="AÑO"
+                                  rowSpan={timeSlots.length} 
+                                  className="border-r align-middle text-center font-bold min-w-[50px]"
+                              >
+                                  {year}º
+                              </TableCell>
+                          )}
+                            <TableCell 
+                              data-label="COMISIÓN"
+                              className="border-r text-center text-xs min-w-[80px]"
+                            >
+                              {timeSlot}
+                            </TableCell>
+                            {days.map(day => (
+                                <React.Fragment key={day}>
+                                    {renderCell(year, timeSlot, day, 1)}
+                                    {renderCell(year, timeSlot, day, 2)}
+                                </React.Fragment>
+                            ))}
+                        </TableRow>
                     ))}
-                </TableRow>
-                <TableRow>
-                    <TableHead className="border-r"></TableHead>
-                    <TableHead className="border-r"></TableHead>
-                    {days.map(day => (
-                        <React.Fragment key={day}>
-                            <TableHead className="text-center border-r font-normal min-w-[120px]">Primer Cuatrimestre</TableHead>
-                            <TableHead className="text-center border-r font-normal min-w-[120px]">Segundo Cuatrimestre</TableHead>
-                        </React.Fragment>
-                    ))}
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {years.map(year => (
-                   <React.Fragment key={year}>
-                     {timeSlots.map((timeSlot, timeIndex) => (
-                         <TableRow key={`${year}-${timeIndex}`}>
-                            {timeIndex === 0 && (
-                                <TableCell rowSpan={timeSlots.length} className="border-r align-middle text-center font-bold min-w-[50px]">
-                                    {year}º
-                                </TableCell>
-                            )}
-                             <TableCell className="border-r text-center text-xs min-w-[80px]">{timeSlot}</TableCell>
-                             {days.map(day => (
-                                 <React.Fragment key={day}>
-                                     {renderCell(year, timeSlot, day, 1)}
-                                     {renderCell(year, timeSlot, day, 2)}
-                                 </React.Fragment>
-                             ))}
-                         </TableRow>
-                     ))}
-                   </React.Fragment>
-                ))}
-            </TableBody>
-            </Table>
-          </CardContent>
-      </Card>
+                  </React.Fragment>
+              ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
 
-    {isUpsertComisionModalOpen && modalContext && (
+    {/* {isUpsertComisionModalOpen && modalContext && (
       <UpsertComisionModal
         isOpen={isUpsertComisionModalOpen}
         onClose={() => setIsUpsertComisionModalOpen(false)}
@@ -337,7 +379,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         context={modalContext}
         courses={courses}
       />
-    )}
+    )} */}
 
     <Dialog open={!!assigningSection} onOpenChange={() => setAssigningSection(null)}>
         <DialogContent className="sm:max-w-[625px]">
@@ -359,7 +401,8 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Aula</TableHead>
-                                <TableHead>Ocupación Futura</TableHead>
+                                <TableHead>Ocupación</TableHead>
+                                <TableHead>Recursos</TableHead>
                                 <TableHead className="w-[100px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -371,7 +414,10 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                                         "font-medium",
                                         classroom.hasCapacity ? "text-green-600" : "text-red-600"
                                     )}>
-                                        {classroom.futureOccupancy}/{classroom.capacity}
+                                        {classroom.futureOccupancy}/{classroom.capacidad}
+                                    </TableCell>
+                                    <TableCell>
+                                        {classroom.recursos?.join(', ')}
                                     </TableCell>
                                     <TableCell>
                                         <Button 
@@ -386,7 +432,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                             ))}
                             {availableClassroomsForModal.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
                                         No hay aulas disponibles que cumplan los requisitos.
                                     </TableCell>
                                 </TableRow>
