@@ -1,17 +1,13 @@
-import { getCarreras, getComisiones, getMaterias, getSedes } from "@/lib/data";
+import {
+  getAulas,
+  getCarreras,
+  getComisiones,
+  getMaterias,
+  getSedes,
+} from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Archive,
-  ArchiveX,
-  Book,
-  BookCopy,
-  Code,
-  Code2,
-  Code2Icon,
-  File,
-  GraduationCap,
-} from "lucide-react";
+import { Book, BookCopy, GraduationCap } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,8 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { log } from "console";
 import { AltaCarreraModal } from "@/components/modals/academico/AltaCarrerra";
+import { AltaMateriaModal } from "@/components/modals/academico/AltaMateriaModal";
+import { AltaComisionModal } from "@/components/modals/academico/AltaComisiones";
+import { Button } from "@/components/ui/button";
 
 export default async function AcademicsPage() {
   const carreras = await getCarreras();
@@ -57,7 +55,11 @@ export default async function AcademicsPage() {
               </TabsTrigger>
             </TabsList>
 
-            <AltaCarreraModal sedes={sedes} />
+            <div className="flex gap-2">
+              <AltaCarreraModal sedes={sedes} />
+              <AltaMateriaModal carreras={carreras} />
+              <AltaComisionModal sedes={sedes} />
+            </div>
           </div>
           <TabsContent value="carreras">
             <TablaCarreras carreras={carreras} />
@@ -106,8 +108,15 @@ function TablaCarreras({ carreras }: { carreras: any[] }) {
             <TableCell>
               <span>{"TBD"}</span>
             </TableCell>
-            <TableCell className="flex gap-2 justify-end">
-              <p>Acciones</p>
+            <TableCell>
+              <div className="flex gap-2 justify-end">
+                <Button size={"xs"} variant={"outline"}>
+                  Editar
+                </Button>
+                <Button size={"xs"} variant={"outline"}>
+                  Eliminar
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -117,8 +126,6 @@ function TablaCarreras({ carreras }: { carreras: any[] }) {
 }
 
 function TablaMaterias({ materias }: { materias: any[] }) {
-  console.log(materias);
-
   return (
     <Table>
       <TableHeader>
@@ -156,8 +163,15 @@ function TablaMaterias({ materias }: { materias: any[] }) {
             <TableCell>
               <span>{c.cuatrimestre}</span>
             </TableCell>
-            <TableCell className="flex gap-2 justify-end">
-              <p>Acciones</p>
+            <TableCell>
+              <div className="flex gap-2 justify-end">
+                <Button size={"xs"} variant={"outline"}>
+                  Editar
+                </Button>
+                <Button size={"xs"} variant={"outline"}>
+                  Eliminar
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -167,41 +181,94 @@ function TablaMaterias({ materias }: { materias: any[] }) {
 }
 
 function TablaComisiones({ comisiones }: { comisiones: any[] }) {
-  console.log(comisiones);
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Carrera</TableHead>
-          <TableHead>Código</TableHead>
-          <TableHead>Años</TableHead>
-          <TableHead>C. Materias</TableHead>
+          <TableHead>Comisión</TableHead>
+          <TableHead>Carreras</TableHead>
+          <TableHead>Materias</TableHead>
+          <TableHead>Profesor</TableHead>
+          <TableHead>Inscriptos</TableHead>
+          <TableHead>Aula</TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
+
       <TableBody>
         {comisiones.map((c) => (
           <TableRow key={c._id}>
+            {/* Nombre comisión + año */}
             <TableCell>
-              <div className="flex items-center gap-2">
-                <Book className="size-4 text-muted-foreground" />
-                <span className="font-medium">{c.nombre_carrera}</span>
+              <div className="flex flex-col">
+                <span className="font-medium">{c.nombre_comision}</span>
+                <span className="text-xs text-muted-foreground">
+                  {c.anio_dictado}
+                </span>
               </div>
             </TableCell>
+
+            {/* Carreras */}
             <TableCell>
-              <div className="flex items-center gap-3">
-                <span>{c.codigo_carrera}</span>
+              {c.carrera_ids?.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {c.carrera_ids.map((car: any) => (
+                    <span key={car._id} className="text-sm px-2 py-0.5 rounded">
+                      {car.nombre_carrera}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">—</span>
+              )}
+            </TableCell>
+
+            {/* Materias */}
+            <TableCell>
+              {c.materia_ids?.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {c.materia_ids.map((m: any) => (
+                    <span key={m._id} className="text-sm px-2 py-0.5 rounded">
+                      {m.nombre_materia}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted-foreground text-sm">—</span>
+              )}
+            </TableCell>
+
+            {/* Profesor */}
+            <TableCell>
+              <span>{c.profesor || "—"}</span>
+            </TableCell>
+
+            {/* Inscriptos */}
+            <TableCell>
+              <span>{c.inscriptos}</span>
+            </TableCell>
+
+            {/* Aula asignada */}
+            <TableCell>
+              {c.asignacion?.aula_id ? (
+                <span>{c.asignacion.aula_id.nombre_o_numero}</span>
+              ) : (
+                <span className="text-muted-foreground text-sm">
+                  Sin asignar
+                </span>
+              )}
+            </TableCell>
+
+            {/* Acciones */}
+            <TableCell>
+              <div className="flex gap-2 justify-end">
+                <Button size={"xs"} variant={"outline"}>
+                  Editar
+                </Button>
+                <Button size={"xs"} variant={"outline"}>
+                  Eliminar
+                </Button>
               </div>
-            </TableCell>
-            <TableCell>
-              <span>{c.anios}</span>
-            </TableCell>
-            <TableCell>
-              <span>{"TBD"}</span>
-            </TableCell>
-            <TableCell className="flex gap-2 justify-end">
-              <p>Acciones</p>
             </TableCell>
           </TableRow>
         ))}

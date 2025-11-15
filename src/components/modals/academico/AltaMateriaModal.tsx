@@ -14,12 +14,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
 
-export function AltaCarreraModal({ sedes }) {
+export function AltaMateriaModal({ carreras }) {
   const [open, setOpen] = React.useState(false);
   const [codigo, setCodigo] = React.useState("");
   const [nombre, setNombre] = React.useState("");
-  const [anios, setAnios] = React.useState<number | "">("");
-  const [sedeIds, setSedeIds] = React.useState<string[]>([]);
+
+  const [carreraId, setCarreraId] = React.useState("");
+  const [anioCarrera, setAnioCarrera] = React.useState<number | "">("");
+  const [cuatrimestre, setCuatrimestre] = React.useState<number | "">("");
+
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -27,11 +30,16 @@ export function AltaCarreraModal({ sedes }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!codigo.trim() || !nombre.trim() || !anios || sedeIds.length === 0) {
+    if (
+      !codigo.trim() ||
+      !nombre.trim() ||
+      !carreraId ||
+      !anioCarrera ||
+      !cuatrimestre
+    ) {
       toast({
         title: "Error",
-        description:
-          "Todos los campos son obligatorios, incluyendo al menos una sede.",
+        description: "Todos los campos son obligatorios.",
         variant: "destructive",
       });
       return;
@@ -40,13 +48,14 @@ export function AltaCarreraModal({ sedes }) {
     setLoading(true);
     try {
       const payload = {
-        codigo_carrera: codigo,
-        nombre_carrera: nombre,
-        anios: Number(anios),
-        sede_ids: sedeIds,
+        codigo_materia: codigo,
+        nombre_materia: nombre,
+        carrera_id: carreraId,
+        anio_carrera: Number(anioCarrera),
+        cuatrimestre: Number(cuatrimestre),
       };
 
-      const res = await fetch("/api/carreras", {
+      const res = await fetch("/api/materias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -54,18 +63,20 @@ export function AltaCarreraModal({ sedes }) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "No se pudo crear la carrera");
+        throw new Error(errorData.error || "No se pudo crear la materia");
       }
 
       toast({
-        title: "Carrera creada",
-        description: `La carrera "${nombre}" fue creada correctamente.`,
+        title: "Materia creada",
+        description: `La materia "${nombre}" fue creada correctamente.`,
       });
 
       setCodigo("");
       setNombre("");
-      setAnios("");
-      setSedeIds([]);
+      setCarreraId("");
+      setAnioCarrera("");
+      setCuatrimestre("");
+
       router.refresh();
       setOpen(false);
     } catch (error: any) {
@@ -83,16 +94,17 @@ export function AltaCarreraModal({ sedes }) {
     <>
       <Button onClick={() => setOpen(true)}>
         <PlusCircle />
-        Nueva Carrera
+        Nueva Materia
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Crear nueva carrera</DialogTitle>
+            <DialogTitle>Crear nueva materia</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="py-4 flex flex-col gap-4">
+            {/* Código */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Código *</label>
               <Input
@@ -102,6 +114,7 @@ export function AltaCarreraModal({ sedes }) {
               />
             </div>
 
+            {/* Nombre */}
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Nombre *</label>
               <Input
@@ -111,60 +124,51 @@ export function AltaCarreraModal({ sedes }) {
               />
             </div>
 
+            {/* Carrera */}
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">Cantidad de años *</label>
+              <label className="text-sm font-medium">Carrera *</label>
+              <select
+                className="border rounded-md p-2"
+                value={carreraId}
+                onChange={(e) => setCarreraId(e.target.value)}
+                required
+              >
+                <option value="">Seleccionar carrera...</option>
+                {carreras.map((carr) => (
+                  <option key={carr._id} value={carr._id}>
+                    {carr.nombre_carrera}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Año */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Año de la carrera *</label>
               <Input
                 type="number"
-                value={anios}
-                onChange={(e) => setAnios(e.target.valueAsNumber || "")}
+                min={1}
+                max={10}
+                value={anioCarrera}
+                onChange={(e) => setAnioCarrera(e.target.valueAsNumber || "")}
                 required
               />
             </div>
 
+            {/* Cuatrimestre */}
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">Sedes *</label>
-              <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input max-h-48 overflow-auto">
-                {sedes.map((sede) => (
-                  <label
-                    key={sede._id}
-                    className="flex items-center gap-2 cursor-pointer select-none"
-                  >
-                    <input
-                      type="checkbox"
-                      className="peer hidden"
-                      value={sede._id.toString()}
-                      checked={sedeIds.includes(sede._id.toString())}
-                      onChange={(e) => {
-                        if (e.target.checked)
-                          setSedeIds([...sedeIds, sede._id.toString()]);
-                        else
-                          setSedeIds(
-                            sedeIds.filter((id) => id !== sede._id.toString())
-                          );
-                      }}
-                    />
-                    <span
-                      className="w-5 h-5 rounded border border-input bg-background
-                         flex-shrink-0 flex items-center justify-center
-                         peer-checked:bg-primary peer-checked:border-primary
-                         transition-colors"
-                    >
-                      <svg
-                        className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </span>
-                    <span>{sede.nombre}</span>
-                  </label>
-                ))}
-              </div>
+              <label className="text-sm font-medium">Cuatrimestre *</label>
+              <select
+                className="border rounded-md p-2"
+                value={cuatrimestre}
+                onChange={(e) => setCuatrimestre(Number(e.target.value))}
+                required
+              >
+                <option value="">Seleccionar...</option>
+                <option value={1}>1° Cuatrimestre</option>
+                <option value={2}>2° Cuatrimestre</option>
+                <option value={3}>Anual</option>
+              </select>
             </div>
           </form>
 
@@ -176,6 +180,7 @@ export function AltaCarreraModal({ sedes }) {
             >
               Cancelar
             </Button>
+
             <Button type="submit" onClick={handleSubmit} disabled={loading}>
               {loading ? "Creando..." : "Guardar"}
             </Button>

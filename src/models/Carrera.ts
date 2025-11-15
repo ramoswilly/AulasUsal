@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from "mongoose";
-import Sede from "./Sede"; // Ajusta la ruta según tu proyecto
 
 export interface ICarrera extends Document {
   codigo_carrera: string;
