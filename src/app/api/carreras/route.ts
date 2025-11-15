@@ -3,6 +3,26 @@ import connectToDB from "@/lib/mongodb";
 import Carrera from "@/models/Carrera";
 import Sede from "@/models/Sede";
 
+export async function GET(req: Request) {
+  try {
+    await connectToDB();
+
+    const { searchParams } = new URL(req.url);
+    const sedeId = searchParams.get("sede");
+
+    if (!sedeId) {
+      return NextResponse.json({ error: "Missing sedeId" }, { status: 400 });
+    }
+
+    const carreras = await Carrera.find({ sede_id: sedeId });
+
+    return NextResponse.json(carreras);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     await connectToDB();

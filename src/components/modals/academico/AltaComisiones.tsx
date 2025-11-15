@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
 import { Carrera, Materia } from "@/lib/Tipos/tipos";
+import { getCarrerasPorSede } from "@/lib/data";
 
 export function AltaComisionModal({ sedes }) {
   const [open, setOpen] = React.useState(false);
@@ -43,28 +44,21 @@ export function AltaComisionModal({ sedes }) {
 
   // ------ FETCH DINÁMICO ------
   React.useEffect(() => {
-    if (!sedeId) {
+    if (sedeId === "") {
       setCarreras([]);
-      setCarreraIds([]);
       return;
     }
 
     fetch(`/api/carreras?sede=${sedeId}`)
-      .then((r) => r.json())
-      .then((data) => setCarreras(data || []));
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Carreras recibidas:", data);
+        setCarreras(data);
+      })
+      .catch((err) => console.error("Error en fetch carreras:", err));
   }, [sedeId]);
 
-  React.useEffect(() => {
-    if (!carreraIds.length) {
-      setMaterias([]);
-      setMateriaIds([]);
-      return;
-    }
-
-    fetch(`/api/materias?carreras=${carreraIds.join(",")}`)
-      .then((r) => r.json())
-      .then((data) => setMaterias(data || []));
-  }, [carreraIds]);
+  React.useEffect(() => {}, [carreraIds]);
 
   const resetForm = () => {
     setNombre("");

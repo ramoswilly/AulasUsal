@@ -131,12 +131,40 @@ export async function getCarreras() {
   }
 }
 
+export async function getCarrerasPorSede(sedeId) {
+  noStore();
+  try {
+    await connectToDB();
+    const carreras = await Carrera.find({
+      sede_ids: sedeId,
+    });
+    return serialize(carreras);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch carreras.");
+  }
+}
+
 // --- MATERIA ---
 export async function getMaterias() {
   noStore();
   try {
     await connectToDB();
     const materias = await Materia.find({}).populate("carrera_id");
+    return serialize(materias);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch materias.");
+  }
+}
+
+export async function getMateriasPorCarrera(carreraId: string) {
+  noStore();
+  try {
+    await connectToDB();
+    const materias = await Materia.find({
+      carrera_id: carreraId,
+    });
     return serialize(materias);
   } catch (error) {
     console.error("Database Error:", error);
