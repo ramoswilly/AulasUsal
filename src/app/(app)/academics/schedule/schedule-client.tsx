@@ -231,9 +231,10 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                     result.assignedSections?.forEach(assignment => {
                         const sectionIndex = newSections.findIndex(s => s._id === assignment.sectionId);
                         if (sectionIndex > -1) {
+                            const classroomObject = classrooms.find(c => c._id === assignment.classroomId);
                             newSections[sectionIndex] = {
                                 ...newSections[sectionIndex],
-                                asignacion: { ...newSections[sectionIndex].asignacion, aula_id: assignment.classroomId }
+                                asignacion: { ...newSections[sectionIndex].asignacion, aula_id: classroomObject }
                             };
                         }
                     });

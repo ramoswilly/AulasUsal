@@ -28,90 +28,94 @@ function getCourseForSection(section: Section, courses: any[]) {
 
 
 export async function runAutoAssignment(): Promise<AssignmentResult> {
-    let allSections: any[] = [];
   try {
-    allSections = await getComisiones();
-    const classrooms = await getAulas();
-    const sectionsToAssign = allSections.filter(s => !s.assignedClassroomId);
+    const allComisiones = await getComisiones();
+    const allAulas = await getAulas();
+
+    const comisionesSinAsignar = allComisiones.filter(c => !c.asignacion?.aula_id);
+    const comisionesYaAsignadas = allComisiones.filter(c => c.asignacion?.aula_id);
+
     const assignedSections: { sectionId: string; classroomId: string }[] = [];
     const unassignedSections: { sectionId: string; reason: string }[] = [];
-    
-    // Create a map to track classroom availability per timeslot
-    // Key: `${classroomId}-${day}-${startTime}`, Value: occupied capacity
+
+    // Mapa para rastrear la ocupación de las aulas
+    // Key: `${aulaId}-${dia}-${turno}`, Value: capacidad ocupada
     const scheduleMap = new Map<string, number>();
 
-    // Pre-populate schedule with already assigned sections
-    allSections.forEach(section => {
-        if (section.assignedClassroomId) {
-            section.days.forEach(day => {
-                const key = `${section.assignedClassroomId}-${day}-${section.startTime}`;
-                const currentOccupancy = scheduleMap.get(key) || 0;
-                scheduleMap.set(key, currentOccupancy + section.enrolledStudents);
-            });
-        }
+    // Llenar el mapa con las comisiones ya asignadas
+    comisionesYaAsignadas.forEach(comision => {
+      if (comision.asignacion?.aula_id && comision.horario) {
+        const key = `${comision.asignacion.aula_id}-${comision.horario.dia}-${comision.horario.turno}`;
+        const currentOccupancy = scheduleMap.get(key) || 0;
+        scheduleMap.set(key, currentOccupancy + comision.inscriptos);
+      }
     });
 
-    for (const section of sectionsToAssign) {
-        const potentialClassrooms = [];
+    for (const comision of comisionesSinAsignar) {
+      if (!comision.horario) {
+        unassignedSections.push({
+          sectionId: comision._id.toString(),
+          reason: 'La comisión no tiene un horario definido.',
+        });
+        continue;
+      }
 
-        for (const classroom of classrooms) {
-            // 1. Check resources
-            const hasAllResources = section.desiredResources.every(resId => classroom.resources.includes(resId));
-            if (!hasAllResources) continue;
+      const potentialClassrooms = [];
 
-            // 2. Check availability and capacity for all time slots of the section
-            let isAvailable = true;
-            let totalFutureOccupancy = 0;
-            
-            for (const day of section.days) {
-                const key = `${classroom.id}-${day}-${section.startTime}`;
-                const currentOccupancy = scheduleMap.get(key) || 0;
-                totalFutureOccupancy = currentOccupancy + section.enrolledStudents;
-                
-                if (totalFutureOccupancy > classroom.capacity) {
-                    isAvailable = false;
-                    break;
-                }
-            }
+      for (const aula of allAulas) {
+        const key = `${aula._id}-${comision.horario.dia}-${comision.horario.turno}`;
+        const currentOccupancy = scheduleMap.get(key) || 0;
+        const futureOccupancy = currentOccupancy + comision.inscriptos;
 
-            if (isAvailable) {
-                potentialClassrooms.push({
-                    ...classroom,
-                    remainingCapacity: classroom.capacity - totalFutureOccupancy,
-                });
-            }
+        if (futureOccupancy <= aula.capacidad) {
+          potentialClassrooms.push({
+            ...aula,
+            id: aula._id.toString(),
+            // Guardamos la capacidad restante para el criterio de "best fit"
+            remainingCapacity: aula.capacidad - futureOccupancy,
+          });
         }
+      }
 
-        if (potentialClassrooms.length > 0) {
-            // Sort to find the tightest fit (least remaining capacity)
-            potentialClassrooms.sort((a, b) => a.remainingCapacity - b.remainingCapacity);
-            const bestFitClassroom = potentialClassrooms[0];
-            
-            assignedSections.push({ sectionId: section.id, classroomId: bestFitClassroom.id });
+      if (potentialClassrooms.length > 0) {
+        // Ordenar para encontrar el "best fit" (menor capacidad restante)
+        potentialClassrooms.sort((a, b) => a.remainingCapacity - b.remainingCapacity);
+        const bestFitClassroom = potentialClassrooms[0];
 
-            // Update schedule map with the new assignment
-            section.days.forEach(day => {
-                const key = `${bestFitClassroom.id}-${day}-${section.startTime}`;
-                const currentOccupancy = scheduleMap.get(key) || 0;
-                scheduleMap.set(key, currentOccupancy + section.enrolledStudents);
-            });
-        } else {
-            unassignedSections.push({ sectionId: section.id, reason: 'No hay aula disponible con la capacidad y recursos necesarios en ese horario.' });
-        }
+        // Asignar y actualizar la base de datos
+        await updateComisionAsignacion(comision._id.toString(), bestFitClassroom.id);
+        
+        assignedSections.push({
+          sectionId: comision._id.toString(),
+          classroomId: bestFitClassroom.id,
+        });
+
+        // Actualizar el mapa de horarios con la nueva asignación
+        const key = `${bestFitClassroom.id}-${comision.horario.dia}-${comision.horario.turno}`;
+        const currentOccupancy = scheduleMap.get(key) || 0;
+        scheduleMap.set(key, currentOccupancy + comision.inscriptos);
+
+      } else {
+        unassignedSections.push({
+          sectionId: comision._id.toString(),
+          reason: 'No hay aulas disponibles con capacidad suficiente en el horario solicitado.',
+        });
+      }
     }
-    
+
     const assignedCount = assignedSections.length;
     const unassignedCount = unassignedSections.length;
 
-    let message = `${assignedCount} comisiones asignadas con éxito.`
-    if (unassignedCount > 0) {
-      message += ` ${unassignedCount} no pudieron ser asignadas.`
-    }
-    
-    // Simulate summary for consistency with previous functionality
-    const failureSummary = unassignedCount > 0 
-        ? `Se encontraron ${unassignedCount} comisiones que no pudieron ser asignadas, principalmente por falta de aulas con la capacidad o recursos necesarios en los horarios solicitados.`
-        : '';
+    const message = `Asignación completada. Comisiones asignadas: ${assignedCount}. Comisiones no asignadas: ${unassignedCount}.`;
+
+    const failureReasons = unassignedSections.map(u => {
+        const comision = allComisiones.find(c => c._id.toString() === u.sectionId);
+        return `Comisión "${comision?.nombre_comision || u.sectionId}": ${u.reason}`;
+    });
+
+    const failureSummary = unassignedCount > 0
+      ? `Resumen de fallos: ${failureReasons.join('; ')}`
+      : '';
 
     return {
       success: true,
@@ -121,16 +125,17 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
       failureSummary,
       assignedSections,
       unassignedSections,
-    }
+    };
   } catch (error) {
-    console.error('Error during local auto-assignment:', error)
+    console.error('Error durante la asignación automática:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     return {
       success: false,
-      message: 'Ocurrió un error durante la asignación automática local.',
+      message: 'Ocurrió un error durante la asignación automática.',
       assignedCount: 0,
-      unassignedCount: allSections.filter(s => !s.assignedClassroomId).length,
-      failureSummary: 'No se pudo generar un resumen debido a un error inesperado en el servidor.'
-    }
+      unassignedCount: (await getComisiones()).filter(c => !c.asignacion?.aula_id).length,
+      failureSummary: `Error del servidor: ${errorMessage}`,
+    };
   }
 }
 
