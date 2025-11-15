@@ -44,6 +44,21 @@ import './responsive-schedule.css'
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const timeSlots = ['18:30 a 21:30 hs.'];
 
+const dayNameToNumber = {
+  'Lunes': 1,
+  'Martes': 2,
+  'Miércoles': 3,
+  'Jueves': 4,
+  'Viernes': 5,
+  'Sábado': 6,
+}
+
+const turnStringToNumber = {
+    'MAÑANA': 1,
+    'TARDE': 2,
+    'NOCHE': 3,
+}
+
 function SectionCard({ section, onAssignClick, classroom }: { section: Section, onAssignClick: (section: Section) => void, classroom: any | null }) {
     const course = section.materia_ids?.[0];
     const capacity = classroom ? classroom.capacidad : null;
@@ -113,9 +128,12 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const years = selectedProgramData ? Array.from({ length: selectedProgramData.anios }, (_, i) => i + 1) : [];
     const classroomMap = new Map(classrooms.map(c => [c._id, c.nombre_o_numero]));
     
-    const getSections = (year: number, timeSlot: string, day: string, semester: number) => {
+    const getSections = (year: number, day: string, semester: number) => {
+        const dayAsNumber = dayNameToNumber[day];
+        const turnAsNumber = turnStringToNumber[selectedTurn];
+
         return sections.filter(s => {
-            if (s.horario.dia !== day || !s.horario.turno.includes(selectedTurn)) {
+            if (!s.horario || s.horario.dia !== dayAsNumber || s.horario.turno !== turnAsNumber) {
                 return false;
             }
 
@@ -246,7 +264,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const availableClassroomsForModal = getAvailableClassrooms(assigningSection);
 
     const renderCell = (year: number, timeSlot: string, day: string, semester: number) => {
-        const sectionsForCell = getSections(year, timeSlot, day, semester);
+        const sectionsForCell = getSections(year, day, semester);
         if (sectionsForCell.length === 0) {
             return <TableCell 
                 className="h-28 border-r" 
