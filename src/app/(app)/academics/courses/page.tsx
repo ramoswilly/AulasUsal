@@ -1,17 +1,13 @@
-import { getCarreras, getComisiones, getMaterias, getSedes } from "@/lib/data";
+import {
+  getAulas,
+  getCarreras,
+  getComisiones,
+  getMaterias,
+  getSedes,
+} from "@/lib/data";
 import { PageHeader } from "@/components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Archive,
-  ArchiveX,
-  Book,
-  BookCopy,
-  Code,
-  Code2,
-  Code2Icon,
-  File,
-  GraduationCap,
-} from "lucide-react";
+import { Book, BookCopy, GraduationCap } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { log } from "console";
 import { AltaCarreraModal } from "@/components/modals/academico/AltaCarrerra";
+import { AltaMateriaModal } from "@/components/modals/academico/AltaMateriaModal";
+import { AltaComisionModal } from "@/components/modals/academico/AltaComisiones";
 
 export default async function AcademicsPage() {
   const carreras = await getCarreras();
@@ -58,6 +56,8 @@ export default async function AcademicsPage() {
             </TabsList>
 
             <AltaCarreraModal sedes={sedes} />
+            <AltaMateriaModal carreras={carreras} />
+            <AltaComisionModal sedes={sedes} />
           </div>
           <TabsContent value="carreras">
             <TablaCarreras carreras={carreras} />
