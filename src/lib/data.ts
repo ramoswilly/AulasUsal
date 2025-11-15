@@ -131,6 +131,18 @@ export async function getCarreras() {
   }
 }
 
+export async function getCareerById(id: string) {
+  noStore();
+  try {
+    await connectToDB();
+    const career = await Carrera.findById(id);
+    return serialize(career);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch career.");
+  }
+}
+
 export async function getCarrerasPorSede(sedeId) {
   noStore();
   try {
@@ -185,5 +197,28 @@ export async function getComisiones() {
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch comisiones.");
+  }
+}
+
+export async function getComisionesPorCarrera(carreraId: string) {
+  noStore();
+  try {
+    await connectToDB();
+    const comisiones = await Comision.find({
+      carrera_ids: carreraId,
+    })
+      .populate({
+        path: "materia_ids",
+        model: Materia,
+      })
+      .populate({
+        path: "asignacion.aula_id",
+        model: Aula,
+      })
+      .lean();
+    return serialize(comisiones);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch comisiones for carrera.");
   }
 }

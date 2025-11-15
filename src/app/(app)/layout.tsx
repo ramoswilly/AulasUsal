@@ -123,6 +123,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/horarios-alumnos")}
+                tooltip={{ children: "Horarios Alumnos" }}
+              >
+                <Link href="/horarios-alumnos">
+                  <Users />
+                  <span>Horarios Alumnos</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
