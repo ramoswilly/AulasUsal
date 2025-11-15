@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectToDB from "@/lib/mongodb";
 import Sede from "@/models/Sede";
 import Edificio from "@/models/Edificio";
 import Aula from "@/models/Aula";
+import { connectMongoDB } from "@/lib/mongodb";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } } // Ahora sí funciona
+  { params }: { params: { id:string } }
 ) {
   try {
-    await connectToDB();
+    await connectMongoDB();
     const { id } = params;
     const body = await req.json();
     const { nombre, direccion } = body;
@@ -57,7 +57,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDB();
+    await connectMongoDB();
     const { id } = params;
 
     const sede = await Sede.findById(id);
