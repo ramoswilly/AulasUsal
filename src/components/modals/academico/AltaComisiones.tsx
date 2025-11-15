@@ -29,8 +29,10 @@ export function AltaComisionModal({ sedes }) {
 
   const [dia, setDia] = React.useState<number | "">("");
   const [turno, setTurno] = React.useState<number | "">("");
+  const [cuatrimestre, setCuatrimestre] = React.useState<number | "">("");
 
   const [sedeId, setSedeId] = React.useState("");
+
   const [carreras, setCarreras] = React.useState<Carrera[]>([]);
   const [carreraIds, setCarreraIds] = React.useState<string[]>([]);
 
@@ -49,7 +51,7 @@ export function AltaComisionModal({ sedes }) {
       return;
     }
 
-    fetch(`/api/carreras?sede=${sedeId}`)
+    fetch(`/api/carreras?sedeId=${sedeId}`)
       .then((res) => res.json())
       .then((data) => {
         console.log("Carreras recibidas:", data);
@@ -58,7 +60,26 @@ export function AltaComisionModal({ sedes }) {
       .catch((err) => console.error("Error en fetch carreras:", err));
   }, [sedeId]);
 
-  React.useEffect(() => {}, [carreraIds]);
+  React.useEffect(() => {
+    if (carreraIds.length === 0 || !cuatrimestre) {
+      setMaterias([]);
+      return;
+    }
+
+    const queryCarreras = carreraIds
+      .map((id) => `carreraId=${encodeURIComponent(id)}`)
+      .join("&");
+
+    const query = `${queryCarreras}&cuatrimestre=${cuatrimestre}`;
+
+    fetch(`/api/materias?${query}`, { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Materias recibidas:", data);
+        setMaterias(data);
+      })
+      .catch((err) => console.error("Error en fetch materias:", err));
+  }, [carreraIds, cuatrimestre]);
 
   const resetForm = () => {
     setNombre("");
@@ -79,6 +100,7 @@ export function AltaComisionModal({ sedes }) {
       !anioDictado ||
       !dia ||
       !turno ||
+      !cuatrimestre ||
       !sedeId ||
       carreraIds.length === 0 ||
       materiaIds.length === 0
@@ -99,7 +121,11 @@ export function AltaComisionModal({ sedes }) {
         anio_dictado: Number(anioDictado),
         inscriptos: Number(inscriptos) || 0,
         profesor,
-        horario: { dia: Number(dia), turno: Number(turno) },
+        horario: {
+          dia: Number(dia),
+          turno: Number(turno),
+          cuatrimestre: Number(cuatrimestre),
+        },
         sede_id: sedeId,
         carrera_ids: carreraIds,
         materia_ids: materiaIds,
@@ -144,7 +170,7 @@ export function AltaComisionModal({ sedes }) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90%] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crear nueva comisión</DialogTitle>
         </DialogHeader>
@@ -222,6 +248,21 @@ export function AltaComisionModal({ sedes }) {
             </select>
           </div>
 
+          {/* CUATRIMESTRE */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Cuatrimestre *</label>
+            <select
+              className="border rounded-md p-2"
+              value={cuatrimestre}
+              onChange={(e) => setCuatrimestre(Number(e.target.value))}
+            >
+              <option value="">Seleccionar cuatrimestre...</option>
+              <option value={1}>1° Cuatrimestre</option>
+              <option value={2}>2° Cuatrimestre</option>
+              <option value={3}>Anual</option>
+            </select>
+          </div>
+
           {/* SEDE */}
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">Sede *</label>
@@ -243,22 +284,56 @@ export function AltaComisionModal({ sedes }) {
           {carreras.length > 0 && (
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Carreras *</label>
-              <select
-                multiple
-                className="border rounded-md p-2 h-28"
-                value={carreraIds}
-                onChange={(e) =>
-                  setCarreraIds(
-                    Array.from(e.target.selectedOptions, (o) => o.value)
-                  )
-                }
-              >
-                {carreras.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.nombre_carrera}
-                  </option>
+              <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input max-h-48 overflow-auto">
+                {carreras.map((carrera) => (
+                  <label
+                    key={carrera._id}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      className="peer hidden"
+                      value={carrera._id.toString()}
+                      checked={carreraIds.includes(carrera._id.toString())}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCarreraIds([
+                            ...carreraIds,
+                            carrera._id.toString(),
+                          ]);
+                        } else {
+                          setCarreraIds(
+                            carreraIds.filter(
+                              (id) => id !== carrera._id.toString()
+                            )
+                          );
+                        }
+                      }}
+                    />
+
+                    <span
+                      className="w-5 h-5 rounded border border-input bg-background 
+              flex-shrink-0 flex items-center justify-center
+              peer-checked:bg-primary peer-checked:border-primary
+              transition-colors"
+                    >
+                      <svg
+                        className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+
+                    <span>{carrera.nombre_carrera}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
           )}
 
@@ -266,22 +341,56 @@ export function AltaComisionModal({ sedes }) {
           {materias.length > 0 && (
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">Materias *</label>
-              <select
-                multiple
-                className="border rounded-md p-2 h-28"
-                value={materiaIds}
-                onChange={(e) =>
-                  setMateriaIds(
-                    Array.from(e.target.selectedOptions, (o) => o.value)
-                  )
-                }
-              >
-                {materias.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.nombre_materia}
-                  </option>
+              <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input max-h-48 overflow-auto">
+                {materias.map((materia) => (
+                  <label
+                    key={materia._id}
+                    className="flex items-center gap-2 cursor-pointer select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      className="peer hidden"
+                      value={materia._id.toString()}
+                      checked={materiaIds.includes(materia._id.toString())}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setMateriaIds([
+                            ...materiaIds,
+                            materia._id.toString(),
+                          ]);
+                        } else {
+                          setMateriaIds(
+                            materiaIds.filter(
+                              (id) => id !== materia._id.toString()
+                            )
+                          );
+                        }
+                      }}
+                    />
+
+                    <span
+                      className="w-5 h-5 rounded border border-input bg-background 
+              flex-shrink-0 flex items-center justify-center
+              peer-checked:bg-primary peer-checked:border-primary
+              transition-colors"
+                    >
+                      <svg
+                        className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </span>
+
+                    <span>{materia.nombre_materia}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
           )}
 

@@ -3,6 +3,38 @@ import connectToDB from "@/lib/mongodb";
 import Materia from "@/models/Materia";
 import Carrera from "@/models/Carrera";
 
+export async function GET(req: Request) {
+  try {
+    await connectToDB();
+
+    const { searchParams } = new URL(req.url);
+    const carreraIds = searchParams.getAll("carreraId");
+    const cuatrimestre = searchParams.get("cuatrimestre");
+
+    // Si no mandan carreras → devolver vacío
+    if (carreraIds.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    // Armamos el filtro base
+    const filter: any = {
+      carrera_id: { $in: carreraIds },
+    };
+
+    // Si mandan cuatrimestre → agregarlo al filtro
+    if (cuatrimestre && !isNaN(Number(cuatrimestre))) {
+      filter.cuatrimestre = Number(cuatrimestre);
+    }
+
+    const materias = await Materia.find(filter);
+
+    return NextResponse.json(materias);
+  } catch (err) {
+    console.error("Error API materias:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     await connectToDB();

@@ -35,8 +35,6 @@ export default async function CampusesPage() {
             (b) => b.sede_id === sede._id || b.sede_id?._id === sede._id
           ).length;
 
-          console.log(buildingCount);
-
           return (
             <Card key={sede._id}>
               <CardHeader>

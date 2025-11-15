@@ -8,13 +8,13 @@ export async function GET(req: Request) {
     await connectToDB();
 
     const { searchParams } = new URL(req.url);
-    const sedeId = searchParams.get("sede");
+    const sedeId = searchParams.get("sedeId");
 
     if (!sedeId) {
       return NextResponse.json({ error: "Missing sedeId" }, { status: 400 });
     }
 
-    const carreras = await Carrera.find({ sede_id: sedeId });
+    const carreras = await Carrera.find({ sede_ids: sedeId });
 
     return NextResponse.json(carreras);
   } catch (error) {

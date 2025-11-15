@@ -6,8 +6,9 @@ export interface IComision extends Document {
   inscriptos: number;
   profesor: string;
   horario: {
-    dia: number; // ahora número
-    turno: number; // ahora número
+    dia: number;
+    turno: number;
+    cuatrimestre: number; // 1-3
   };
   asignacion: {
     aula_id: mongoose.Types.ObjectId;
@@ -30,6 +31,7 @@ const ComisionSchema: Schema = new Schema({
   horario: {
     dia: { type: Number, required: true }, // 1-6
     turno: { type: Number, required: true }, // 1-3
+    cuatrimestre: { type: Number, required: true }, // 1-3
   },
   asignacion: {
     aula_id: { type: Schema.Types.ObjectId, ref: "Aula" },
