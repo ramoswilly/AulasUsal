@@ -20,6 +20,12 @@ import { AltaCarreraModal } from "@/components/modals/academico/AltaCarrerra";
 import { AltaMateriaModal } from "@/components/modals/academico/AltaMateriaModal";
 import { AltaComisionModal } from "@/components/modals/academico/AltaComisiones";
 import { Button } from "@/components/ui/button";
+import { EliminarCarreraModal } from "@/components/modals/academico/EliminarCarreraModal";
+import { EditarCarreraModal } from "@/components/modals/academico/EditarCarreraModal";
+import { EditarMateriaModal } from "@/components/modals/academico/EditarMateriaModal";
+import { EliminarMateriaModal } from "@/components/modals/academico/EliminarMateriaModal";
+import { EditarComisionModal } from "@/components/modals/academico/EditarComisionModal";
+import { EliminarComisionModal } from "@/components/modals/academico/EliminarComisionModal";
 
 export default async function AcademicsPage() {
   const carreras = await getCarreras();
@@ -55,20 +61,20 @@ export default async function AcademicsPage() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <AltaCarreraModal sedes={sedes} />
               <AltaMateriaModal carreras={carreras} />
               <AltaComisionModal sedes={sedes} />
             </div>
           </div>
           <TabsContent value="carreras">
-            <TablaCarreras carreras={carreras} />
+            <TablaCarreras carreras={carreras} sedes={sedes} />
           </TabsContent>
           <TabsContent value="materias">
-            <TablaMaterias materias={materias} />
+            <TablaMaterias materias={materias} carreras={carreras} />
           </TabsContent>
           <TabsContent value="comisiones">
-            <TablaComisiones comisiones={comisiones} />
+            <TablaComisiones comisiones={comisiones} sedes={sedes} />
           </TabsContent>
         </div>
       </Tabs>
@@ -76,7 +82,7 @@ export default async function AcademicsPage() {
   );
 }
 
-function TablaCarreras({ carreras }: { carreras: any[] }) {
+function TablaCarreras({ carreras, sedes }: { carreras: any[]; sedes: any[] }) {
   return (
     <Table>
       <TableHeader>
@@ -84,7 +90,6 @@ function TablaCarreras({ carreras }: { carreras: any[] }) {
           <TableHead>Carrera</TableHead>
           <TableHead>Código</TableHead>
           <TableHead>Años</TableHead>
-          <TableHead>C. Materias</TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
@@ -106,16 +111,12 @@ function TablaCarreras({ carreras }: { carreras: any[] }) {
               <span>{c.anios}</span>
             </TableCell>
             <TableCell>
-              <span>{"TBD"}</span>
-            </TableCell>
-            <TableCell>
               <div className="flex gap-2 justify-end">
-                <Button size={"xs"} variant={"outline"}>
-                  Editar
-                </Button>
-                <Button size={"xs"} variant={"outline"}>
-                  Eliminar
-                </Button>
+                <EditarCarreraModal carrera={c} sedes={sedes} />
+                <EliminarCarreraModal
+                  carreraId={c._id}
+                  carreraNombre={c.nombre_carrera}
+                />
               </div>
             </TableCell>
           </TableRow>
@@ -125,7 +126,13 @@ function TablaCarreras({ carreras }: { carreras: any[] }) {
   );
 }
 
-function TablaMaterias({ materias }: { materias: any[] }) {
+function TablaMaterias({
+  materias,
+  carreras,
+}: {
+  materias: any[];
+  carreras: any[];
+}) {
   return (
     <Table>
       <TableHeader>
@@ -165,12 +172,11 @@ function TablaMaterias({ materias }: { materias: any[] }) {
             </TableCell>
             <TableCell>
               <div className="flex gap-2 justify-end">
-                <Button size={"xs"} variant={"outline"}>
-                  Editar
-                </Button>
-                <Button size={"xs"} variant={"outline"}>
-                  Eliminar
-                </Button>
+                <EditarMateriaModal materia={c} carreras={carreras} />
+                <EliminarMateriaModal
+                  materiaId={c._id}
+                  materiaNombre={c.nombre_materia}
+                />
               </div>
             </TableCell>
           </TableRow>
@@ -180,7 +186,13 @@ function TablaMaterias({ materias }: { materias: any[] }) {
   );
 }
 
-function TablaComisiones({ comisiones }: { comisiones: any[] }) {
+function TablaComisiones({
+  comisiones,
+  sedes,
+}: {
+  comisiones: any[];
+  sedes: any[];
+}) {
   return (
     <Table>
       <TableHeader>
@@ -262,12 +274,8 @@ function TablaComisiones({ comisiones }: { comisiones: any[] }) {
             {/* Acciones */}
             <TableCell>
               <div className="flex gap-2 justify-end">
-                <Button size={"xs"} variant={"outline"}>
-                  Editar
-                </Button>
-                <Button size={"xs"} variant={"outline"}>
-                  Eliminar
-                </Button>
+                <EditarComisionModal comision={c} sedes={sedes} />
+                <EliminarComisionModal comision={c} />
               </div>
             </TableCell>
           </TableRow>
