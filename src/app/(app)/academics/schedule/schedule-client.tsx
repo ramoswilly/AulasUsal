@@ -430,6 +430,12 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                         <Users className="size-4 text-muted-foreground" />
                         <span>{assigningSection?.inscriptos} alumnos</span>
                     </div>
+                    {assigningSection?.recursos && assigningSection.recursos.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <Projector className="size-4 text-muted-foreground" />
+                            <span>Recursos: {assigningSection.recursos.join(', ')}</span>
+                        </div>
+                    )}
                 </div>
                 <div className="border rounded-md max-h-[300px] overflow-y-auto">
                     <Table>
