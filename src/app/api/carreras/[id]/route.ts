@@ -53,7 +53,6 @@ export async function PUT(req: NextRequest, { params }) {
 
     return NextResponse.json(carrera);
   } catch (error) {
-    console.log(error);
     return NextResponse.json(
       { error: "Error actualizando carrera" },
       { status: 500 }

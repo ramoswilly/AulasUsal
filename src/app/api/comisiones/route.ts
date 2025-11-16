@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       sede_id,
       carrera_ids,
       materia_ids,
+      recursos,
       anio_por_carrera,
     } = body;
 
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
       sede_id,
       carrera_ids,
       materia_ids,
+      recursos: recursos || [],
       anio_por_carrera: anio_por_carrera || [],
     });
 
