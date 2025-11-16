@@ -15,8 +15,6 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 
 export function EditarCarreraModal({ carrera, sedes }) {
-  console.log(carrera);
-
   const [open, setOpen] = React.useState(false);
 
   const [codigo, setCodigo] = React.useState(carrera.codigo_carrera);

@@ -22,6 +22,7 @@ export async function PUT(req: NextRequest, { params }) {
       sede_id,
       carrera_ids,
       materia_ids,
+      recursos,
     } = body;
 
     const existe = await Comision.findById(id);
@@ -73,6 +74,7 @@ export async function PUT(req: NextRequest, { params }) {
         sede_id,
         carrera_ids,
         materia_ids,
+        recursos: recursos || [],
       },
       { new: true }
     );

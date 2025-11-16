@@ -13,12 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { Carrera, Materia } from "@/lib/Tipos/tipos";
+import { AulaRecursos, Carrera, Materia } from "@/lib/Tipos/tipos";
 import { Pencil } from "lucide-react";
 
 export function EditarComisionModal({ comision, sedes }) {
-  console.log(comision);
-
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -47,6 +45,10 @@ export function EditarComisionModal({ comision, sedes }) {
   const [materias, setMaterias] = React.useState<Materia[]>([]);
   const [materiaIds, setMateriaIds] = React.useState<string[]>(
     comision.materia_ids.map((m) => m._id.toString())
+  );
+
+  const [recursos, setRecursos] = React.useState<string[]>(
+    comision.recursos || []
   );
 
   const [loading, setLoading] = React.useState(false);
@@ -88,6 +90,7 @@ export function EditarComisionModal({ comision, sedes }) {
       sede_id: sedeId,
       carrera_ids: carreraIds,
       materia_ids: materiaIds,
+      recursos,
     };
 
     try {
@@ -348,6 +351,40 @@ export function EditarComisionModal({ comision, sedes }) {
               </div>
             </div>
           )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Recursos</label>
+            <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input">
+              {AulaRecursos.map((r) => (
+                <label
+                  key={r}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    className="peer hidden"
+                    checked={recursos.includes(r)}
+                    onChange={(e) => {
+                      if (e.target.checked) setRecursos([...recursos, r]);
+                      else setRecursos(recursos.filter((res) => res !== r));
+                    }}
+                  />
+                  <span className="w-5 h-5 rounded border border-input bg-background flex items-center justify-center peer-checked:bg-primary peer-checked:border-primary transition-colors">
+                    <svg
+                      className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      fill="none"
+                      strokeWidth="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <span>{r}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <DialogFooter>
             <Button

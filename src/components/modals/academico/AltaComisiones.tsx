@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
-import { Carrera, Materia } from "@/lib/Tipos/tipos";
-import { getCarrerasPorSede } from "@/lib/data";
+import { AulaRecursos, Carrera, Materia } from "@/lib/Tipos/tipos";
 
 export function AltaComisionModal({ sedes }) {
   const [open, setOpen] = React.useState(false);
@@ -39,6 +38,8 @@ export function AltaComisionModal({ sedes }) {
   const [materias, setMaterias] = React.useState<Materia[]>([]);
   const [materiaIds, setMateriaIds] = React.useState<string[]>([]);
 
+  const [recursos, setRecursos] = React.useState<string[]>([]);
+
   const [loading, setLoading] = React.useState(false);
 
   const { toast } = useToast();
@@ -54,7 +55,6 @@ export function AltaComisionModal({ sedes }) {
     fetch(`/api/carreras?sedeId=${sedeId}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("Carreras recibidas:", data);
         setCarreras(data);
       })
       .catch((err) => console.error("Error en fetch carreras:", err));
@@ -75,7 +75,6 @@ export function AltaComisionModal({ sedes }) {
     fetch(`/api/materias?${query}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Materias recibidas:", data);
         setMaterias(data);
       })
       .catch((err) => console.error("Error en fetch materias:", err));
@@ -90,6 +89,7 @@ export function AltaComisionModal({ sedes }) {
     setSedeId("");
     setCarreraIds([]);
     setMateriaIds([]);
+    setRecursos([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,6 +129,7 @@ export function AltaComisionModal({ sedes }) {
         sede_id: sedeId,
         carrera_ids: carreraIds,
         materia_ids: materiaIds,
+        recursos,
       };
 
       const res = await fetch("/api/comisiones", {
@@ -393,6 +394,51 @@ export function AltaComisionModal({ sedes }) {
               </div>
             </div>
           )}
+
+          {/* RECURSOS DE AULA */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Recursos necesarios</label>
+            <div className="flex flex-col flex-wrap gap-2 bg-sidebar p-2 rounded-md border border-input">
+              {AulaRecursos.map((r) => (
+                <label
+                  key={r}
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    className="peer hidden"
+                    value={r}
+                    checked={recursos.includes(r)}
+                    onChange={(e) => {
+                      if (e.target.checked) setRecursos([...recursos, r]);
+                      else setRecursos(recursos.filter((res) => res !== r));
+                    }}
+                  />
+
+                  <span
+                    className="w-5 h-5 rounded border border-input bg-background 
+            flex-shrink-0 flex items-center justify-center
+            peer-checked:bg-primary peer-checked:border-primary
+            transition-colors"
+                  >
+                    <svg
+                      className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+
+                  <span>{r}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <DialogFooter className="flex justify-between pt-4">
             <Button

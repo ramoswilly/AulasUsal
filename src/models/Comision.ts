@@ -1,3 +1,4 @@
+import { AulaRecursos } from "@/lib/Tipos/tipos";
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IComision extends Document {
@@ -5,6 +6,7 @@ export interface IComision extends Document {
   anio_dictado: number;
   inscriptos: number;
   profesor: string;
+  recursos?: string[];
   horario: {
     dia: number;
     turno: number;
@@ -28,6 +30,7 @@ const ComisionSchema: Schema = new Schema({
   anio_dictado: { type: Number, required: true },
   inscriptos: { type: Number },
   profesor: { type: String },
+  recursos: [{ type: String, enum: AulaRecursos, default: [] }],
   horario: {
     dia: { type: Number, required: true }, // 1-6
     turno: { type: Number, required: true }, // 1-3
