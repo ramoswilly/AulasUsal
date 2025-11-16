@@ -27,31 +27,35 @@ function getCourseForSection(section: Section, courses: any[]) {
 }
 
 
-export async function runAutoAssignment(): Promise<AssignmentResult> {
+export async function runAutoAssignment(reassignAll: boolean): Promise<AssignmentResult> {
   try {
     const allComisiones = await getComisiones();
     const allAulas = await getAulas();
 
-    const comisionesSinAsignar = allComisiones.filter(c => !c.asignacion?.aula_id);
-    const comisionesYaAsignadas = allComisiones.filter(c => c.asignacion?.aula_id);
+    const comisionesTarget = reassignAll 
+      ? allComisiones 
+      : allComisiones.filter(c => !c.asignacion?.aula_id);
 
     const assignedSections: { sectionId: string; classroomId: string }[] = [];
     const unassignedSections: { sectionId: string; reason: string }[] = [];
 
-    // Mapa para rastrear la ocupación de las aulas
-    // Key: `${aulaId}-${dia}-${turno}`, Value: capacidad ocupada
     const scheduleMap = new Map<string, number>();
 
-    // Llenar el mapa con las comisiones ya asignadas
-    comisionesYaAsignadas.forEach(comision => {
-      if (comision.asignacion?.aula_id && comision.horario) {
-        const key = `${comision.asignacion.aula_id}-${comision.horario.dia}-${comision.horario.turno}`;
-        const currentOccupancy = scheduleMap.get(key) || 0;
-        scheduleMap.set(key, currentOccupancy + comision.inscriptos);
-      }
-    });
+    if (!reassignAll) {
+      const comisionesYaAsignadas = allComisiones.filter(c => c.asignacion?.aula_id);
+      comisionesYaAsignadas.forEach(comision => {
+        if (comision.asignacion?.aula_id && comision.horario) {
+          const key = `${comision.asignacion.aula_id}-${comision.horario.dia}-${comision.horario.turno}`;
+          const currentOccupancy = scheduleMap.get(key) || 0;
+          scheduleMap.set(key, currentOccupancy + comision.inscriptos);
+        }
+      });
+    } else {
+      // Si es reasignación total, limpiamos todas las asignaciones primero
+      await Comision.updateMany({}, { $unset: { asignacion: "" } });
+    }
 
-    for (const comision of comisionesSinAsignar) {
+    for (const comision of comisionesTarget) {
       if (!comision.horario) {
         unassignedSections.push({
           sectionId: comision._id.toString(),
@@ -67,22 +71,49 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
         const currentOccupancy = scheduleMap.get(key) || 0;
         const futureOccupancy = currentOccupancy + comision.inscriptos;
 
-        if (futureOccupancy <= aula.capacidad) {
-          potentialClassrooms.push({
-            ...aula,
-            id: aula._id.toString(),
-            // Guardamos la capacidad restante para el criterio de "best fit"
-            remainingCapacity: aula.capacidad - futureOccupancy,
-          });
+        // 1. Chequeo de capacidad
+        if (futureOccupancy > aula.capacidad) {
+          continue; // No cumple capacidad
         }
+
+        // 2. Chequeo de recursos
+        const requiredRecursos = comision.recursos || [];
+        const aulaRecursos = aula.recursos || [];
+        const hasAllRecursos = requiredRecursos.every(req => aulaRecursos.includes(req));
+
+        potentialClassrooms.push({
+          ...aula,
+          id: aula._id.toString(),
+          remainingCapacity: aula.capacidad - futureOccupancy,
+          hasAllRecursos,
+          // Un score para ordenar: más recursos coincidentes es mejor
+          resourceMatchScore: requiredRecursos.filter(req => aulaRecursos.includes(req)).length,
+        });
       }
 
       if (potentialClassrooms.length > 0) {
-        // Ordenar para encontrar el "best fit" (menor capacidad restante)
-        potentialClassrooms.sort((a, b) => a.remainingCapacity - b.remainingCapacity);
+        // Ordenar:
+        // 1. Prioridad #1: Aulas que tienen TODOS los recursos.
+        // 2. Prioridad #2: "Best fit" (menor capacidad restante).
+        potentialClassrooms.sort((a, b) => {
+          if (a.hasAllRecursos !== b.hasAllRecursos) {
+            return a.hasAllRecursos ? -1 : 1;
+          }
+          return a.remainingCapacity - b.remainingCapacity;
+        });
+
         const bestFitClassroom = potentialClassrooms[0];
 
-        // Asignar y actualizar la base de datos
+        // Solo asignamos si cumple con los recursos requeridos, si es que tiene.
+        if (comision.recursos?.length > 0 && !bestFitClassroom.hasAllRecursos) {
+            unassignedSections.push({
+                sectionId: comision._id.toString(),
+                reason: `No hay aulas disponibles con los recursos necesarios (${comision.recursos.join(', ')}).`,
+            });
+            continue;
+        }
+
+
         await updateComisionAsignacion(comision._id.toString(), bestFitClassroom.id);
         
         assignedSections.push({
@@ -90,7 +121,6 @@ export async function runAutoAssignment(): Promise<AssignmentResult> {
           classroomId: bestFitClassroom.id,
         });
 
-        // Actualizar el mapa de horarios con la nueva asignación
         const key = `${bestFitClassroom.id}-${comision.horario.dia}-${comision.horario.turno}`;
         const currentOccupancy = scheduleMap.get(key) || 0;
         scheduleMap.set(key, currentOccupancy + comision.inscriptos);

@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast'
-import { Users, Projector, Bot, Loader2, Sparkles, User, Plus } from 'lucide-react'
+import { Users, Projector, Bot, Loader2, Sparkles, User, Plus, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { runAutoAssignment, type AssignmentResult, updateComisionAsignacion } from '@/lib/actions'
 // import { UpsertComisionModal } from '@/components/modals/sedes/UpsertComisionModal'
@@ -98,7 +98,7 @@ function SectionCard({ section, onAssignClick, classroom }: { section: Section, 
                                 className="w-7 h-7"
                                 onClick={(e) => { e.stopPropagation(); onAssignClick(section); }}
                             >
-                                <Plus className="w-4 h-4" />
+                                <Pencil className="w-4 h-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -118,6 +118,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
     const [assigningSection, setAssigningSection] = React.useState<Section | null>(null);
     const [isAssigning, setIsAssigning] = React.useState(false)
     const [assignmentResult, setAssignmentResult] = React.useState<AssignmentResult | null>(null)
+    const [reassignAll, setReassignAll] = React.useState(false);
     // const [isUpsertComisionModalOpen, setIsUpsertComisionModalOpen] = React.useState(false);
     // const [selectedComision, setSelectedComision] = React.useState<IComision | null>(null);
     // const [modalContext, setModalContext] = React.useState<{ day: string; semester: number; year: number; turn: string; selectedProgram: string; } | null>(null);
@@ -218,11 +219,11 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
         }
     }
 
-    const handleAutoAssign = async () => {
+    const handleAutoAssign = async (reassignAll: boolean) => {
         setIsAssigning(true)
         setAssignmentResult(null)
         try {
-            const result = await runAutoAssignment()
+            const result = await runAutoAssignment(reassignAll)
             setAssignmentResult(result)
             
             if (result.success) {
@@ -251,10 +252,10 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
             const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
             setAssignmentResult({
                 success: false,
-                message: errorMessage,
+                message: 'Ocurrió un error durante la asignación automática.',
                 assignedCount: 0,
                 unassignedCount: allSections.filter(s => !s.asignacion?.aula_id).length,
-                failureSummary: 'La simulación local falló. Revise la consola para más detalles.'
+                failureSummary: `Error del cliente: ${errorMessage}`
             });
         } finally {
             setIsAssigning(false)
@@ -324,7 +325,22 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
                 <SelectItem value="NOCHE">Noche</SelectItem>
             </SelectContent>
         </Select>
-        <Button onClick={handleAutoAssign} disabled={isAssigning} className="w-full md:w-auto md:ml-auto">
+        <div className="flex items-center space-x-2">
+            <input
+                type="checkbox"
+                id="reassign-all-checkbox"
+                checked={reassignAll}
+                onChange={(e) => setReassignAll(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label
+                htmlFor="reassign-all-checkbox"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+                Reasignar todo
+            </label>
+        </div>
+        <Button onClick={() => handleAutoAssign(reassignAll)} disabled={isAssigning} className="w-full md:w-auto md:ml-auto">
             {isAssigning ? (
               <Loader2 className="mr-2 animate-spin" />
             ) : (

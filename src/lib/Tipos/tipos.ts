@@ -18,7 +18,7 @@ export const AulaRecursos = [
   "Pizarron",
   "Proyector",
   "Television",
-  "Otro",
+  "Computadoras"
 ] as const;
 
 export type ClassroomType = (typeof ClassroomTypes)[number];
