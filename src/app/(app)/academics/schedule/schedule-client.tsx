@@ -493,7 +493,7 @@ export function ScheduleClient({ courses, programs, allSections, classrooms }: {
               {assignmentResult?.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {assignmentResult?.unassignedCount && assignmentResult.unassignedCount > 0 && (
+          {assignmentResult?.unassignedCount > 0 && (
              <div className="text-sm bg-secondary p-3 rounded-md">
                 <h4 className="font-semibold mb-2">Resumen de fallos:</h4>
                 <p className="text-secondary-foreground">{assignmentResult.failureSummary || 'No se pudo generar un resumen.'}</p>
